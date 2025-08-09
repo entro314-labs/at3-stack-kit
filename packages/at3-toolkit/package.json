@@ -1,0 +1,118 @@
+{
+  "name": "@entro314labs/at3-toolkit",
+  "version": "0.1.0-alpha.1",
+  "description": "Advanced development toolkit for AT3 Stack projects",
+  "keywords": [
+    "at3",
+    "ait3e",
+    "at3-stack",
+    "at3t",
+    "ai-native",
+    "nextjs",
+    "react",
+    "typescript",
+    "tailwind",
+    "supabase",
+    "edge",
+    "serverless",
+    "biome",
+    "vitest",
+    "linting",
+    "testing",
+    "toolkit",
+    "devtools",
+    "cli"
+  ],
+  "homepage": "https://at3-stack.dev",
+  "bugs": {
+    "url": "https://github.com/entro314-labs/at3-stack-kit/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/entro314-labs/at3-stack-kit.git",
+    "directory": "packages/at3-toolkit"
+  },
+  "license": "MIT",
+  "author": "entro314-labs",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./cli": {
+      "import": "./dist/cli.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "at3-toolkit": "./dist/cli.js",
+    "at3t": "./dist/cli.js"
+  },
+  "files": [
+    "dist/**/*",
+    "configs/**/*",
+    "templates/**/*",
+    "README.md",
+    "CHANGELOG.md"
+  ],
+  "scripts": {
+    "bench": "vitest bench",
+    "build": "tsc && chmod +x dist/cli.js",
+    "dev": "tsc --watch",
+    "format": "biome format --write .",
+    "format:check": "biome check .",
+    "lint": "biome check .",
+    "lint:fix": "biome check --fix .",
+    "prepublishOnly": "pnpm build",
+    "release": "changeset publish",
+    "release:dry-run": "echo 'Dry run release complete'",
+    "test": "vitest",
+    "test:ci": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
+    "test:unit": "vitest run --config vitest.config.ts",
+    "test:watch": "vitest watch",
+    "typecheck": "tsc --noEmit",
+    "version": "changeset version"
+  },
+  "dependencies": {
+    "@clack/prompts": "^0.11.0",
+    "boxen": "^8.0.1",
+    "chalk": "^5.5.0",
+    "cli-table3": "^0.6.4",
+    "commander": "^14.0.0",
+    "detect-package-manager": "^3.0.2",
+    "figures": "^6.1.0",
+    "fs-extra": "^11.3.1",
+    "glob": "^11.0.3",
+    "gradient-string": "^3.0.0",
+    "semver": "^7.7.2",
+    "toml": "^3.0.0",
+    "validate-npm-package-name": "^6.0.2",
+    "yaml": "^2.8.1"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.1.4",
+    "@changesets/cli": "^2.29.5",
+    "@types/fs-extra": "^11.0.4",
+    "@types/node": "^24.2.1",
+    "@types/semver": "^7.7.0",
+    "@vitest/coverage-v8": "^3.2.4",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4"
+  },
+  "peerDependencies": {
+    "typescript": ">=5.0.0"
+  },
+  "engines": {
+    "node": ">=22.12.0",
+    "pnpm": ">=9.0.0"
+  },
+  "preferGlobal": false,
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
+  }
+}
