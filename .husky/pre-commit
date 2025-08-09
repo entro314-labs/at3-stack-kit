@@ -1,0 +1,2 @@
+# Run lint-staged to check and fix staged files
+pnpm exec lint-staged

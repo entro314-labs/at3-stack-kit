@@ -1,0 +1,227 @@
+{
+  "common": {
+    "loading": "Cargando...",
+    "error": "Ocurrió un error",
+    "success": "Éxito",
+    "cancel": "Cancelar",
+    "save": "Guardar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "create": "Crear",
+    "update": "Actualizar",
+    "back": "Atrás",
+    "next": "Siguiente",
+    "previous": "Anterior",
+    "search": "Buscar",
+    "filter": "Filtrar",
+    "sort": "Ordenar",
+    "export": "Exportar",
+    "import": "Importar",
+    "copy": "Copiar",
+    "copied": "¡Copiado!",
+    "submit": "Enviar",
+    "confirm": "Confirmar",
+    "close": "Cerrar"
+  },
+  "navigation": {
+    "home": "Inicio",
+    "about": "Acerca de",
+    "contact": "Contacto",
+    "blog": "Blog",
+    "dashboard": "Panel",
+    "profile": "Perfil",
+    "settings": "Configuración",
+    "signIn": "Iniciar Sesión",
+    "signUp": "Registrarse",
+    "signOut": "Cerrar Sesión"
+  },
+  "auth": {
+    "signIn": {
+      "title": "Iniciar Sesión",
+      "description": "Ingresa tu email y contraseña para acceder a tu cuenta",
+      "email": "Email",
+      "emailPlaceholder": "nombre@ejemplo.com",
+      "password": "Contraseña",
+      "passwordPlaceholder": "Ingresa tu contraseña",
+      "signInButton": "Iniciar Sesión",
+      "forgotPassword": "¿Olvidaste tu contraseña?",
+      "noAccount": "¿No tienes una cuenta?",
+      "signUpLink": "Regístrate",
+      "orContinueWith": "O continúa con",
+      "github": "GitHub",
+      "google": "Google",
+      "errors": {
+        "invalidEmail": "Por favor ingresa un email válido",
+        "passwordTooShort": "La contraseña debe tener al menos 6 caracteres",
+        "invalidCredentials": "Email o contraseña inválidos",
+        "tooManyAttempts": "Demasiados intentos. Inténtalo de nuevo más tarde",
+        "userNotFound": "No se encontró una cuenta con este email",
+        "emailNotConfirmed": "Por favor confirma tu dirección de email primero"
+      }
+    },
+    "signUp": {
+      "title": "Crear Cuenta",
+      "description": "Ingresa tus datos para crear tu cuenta",
+      "email": "Email",
+      "emailPlaceholder": "nombre@ejemplo.com",
+      "password": "Contraseña",
+      "passwordPlaceholder": "Crea una contraseña",
+      "confirmPassword": "Confirmar Contraseña",
+      "confirmPasswordPlaceholder": "Confirma tu contraseña",
+      "createAccountButton": "Crear Cuenta",
+      "alreadyHaveAccount": "¿Ya tienes una cuenta?",
+      "signInLink": "Iniciar sesión",
+      "orContinueWith": "O continúa con",
+      "checkEmail": {
+        "title": "Revisa tu Email",
+        "description": "Te hemos enviado un enlace de confirmación para completar tu registro",
+        "message": "Por favor revisa tu email y haz clic en el enlace de confirmación para activar tu cuenta."
+      },
+      "errors": {
+        "invalidEmail": "Por favor ingresa un email válido",
+        "passwordTooShort": "La contraseña debe tener al menos 6 caracteres",
+        "passwordsDontMatch": "Las contraseñas no coinciden",
+        "emailAlreadyExists": "Ya existe una cuenta con este email",
+        "weakPassword": "La contraseña es muy débil. Usa al menos 8 caracteres con números y símbolos"
+      }
+    },
+    "resetPassword": {
+      "title": "Restablecer Contraseña",
+      "description": "Ingresa tu email y te enviaremos un enlace para restablecer tu contraseña",
+      "email": "Email",
+      "emailPlaceholder": "nombre@ejemplo.com",
+      "sendResetLink": "Enviar Enlace",
+      "backToSignIn": "Volver a Iniciar Sesión",
+      "checkEmail": {
+        "title": "Revisa tu Email",
+        "description": "Hemos enviado un enlace para restablecer tu contraseña a tu email",
+        "message": "Si existe una cuenta con ese email, recibirás un enlace para restablecer tu contraseña en breve.",
+        "didntReceive": "¿No recibiste el email? Revisa tu carpeta de spam o inténtalo de nuevo.",
+        "sendAnother": "Enviar Otro Email"
+      },
+      "errors": {
+        "invalidEmail": "Por favor ingresa un email válido",
+        "emailNotFound": "No se encontró una cuenta con este email"
+      }
+    },
+    "authError": {
+      "title": "Error de Autenticación",
+      "description": "No pudimos completar tu autenticación",
+      "reasons": "Hubo un error procesando tu solicitud de autenticación. Esto puede suceder si:",
+      "reasonsList": [
+        "El enlace de autenticación ha expirado",
+        "El enlace ya ha sido usado",
+        "Hubo un problema de conexión"
+      ],
+      "tryAgain": "Intentar de Nuevo",
+      "goHome": "Ir al Inicio"
+    }
+  },
+  "dashboard": {
+    "welcome": "¡Bienvenido de nuevo!",
+    "overview": "Resumen",
+    "analytics": "Analíticas",
+    "reports": "Reportes",
+    "users": "Usuarios",
+    "content": "Contenido",
+    "posts": "Publicaciones",
+    "pages": "Páginas",
+    "media": "Medios",
+    "comments": "Comentarios"
+  },
+  "profile": {
+    "title": "Perfil",
+    "personalInfo": "Información Personal",
+    "username": "Nombre de Usuario",
+    "fullName": "Nombre Completo",
+    "email": "Email",
+    "bio": "Biografía",
+    "website": "Sitio Web",
+    "location": "Ubicación",
+    "avatar": "Avatar",
+    "updateProfile": "Actualizar Perfil",
+    "profileUpdated": "Perfil actualizado exitosamente",
+    "errors": {
+      "usernameRequired": "El nombre de usuario es requerido",
+      "usernameTooShort": "El nombre de usuario debe tener al menos 3 caracteres",
+      "usernameInvalid": "El nombre de usuario solo puede contener letras, números y guiones bajos",
+      "usernameTaken": "Este nombre de usuario ya está en uso",
+      "invalidEmail": "Por favor ingresa un email válido",
+      "invalidWebsite": "Por favor ingresa una URL válida"
+    }
+  },
+  "settings": {
+    "title": "Configuración",
+    "account": "Cuenta",
+    "preferences": "Preferencias",
+    "privacy": "Privacidad",
+    "security": "Seguridad",
+    "notifications": "Notificaciones",
+    "appearance": "Apariencia",
+    "language": "Idioma",
+    "theme": "Tema",
+    "light": "Claro",
+    "dark": "Oscuro",
+    "system": "Sistema",
+    "emailNotifications": "Notificaciones por Email",
+    "pushNotifications": "Notificaciones Push",
+    "marketingEmails": "Emails de Marketing",
+    "securityAlerts": "Alertas de Seguridad",
+    "saveSettings": "Guardar Configuración",
+    "settingsSaved": "Configuración guardada exitosamente"
+  },
+  "blog": {
+    "title": "Blog",
+    "readMore": "Leer Más",
+    "publishedOn": "Publicado el",
+    "by": "por",
+    "tags": "Etiquetas",
+    "categories": "Categorías",
+    "relatedPosts": "Publicaciones Relacionadas",
+    "noPostsFound": "No se encontraron publicaciones",
+    "searchPosts": "Buscar publicaciones...",
+    "filterByTag": "Filtrar por etiqueta",
+    "latestPosts": "Últimas Publicaciones",
+    "popularPosts": "Publicaciones Populares"
+  },
+  "errors": {
+    "404": {
+      "title": "Página No Encontrada",
+      "description": "La página que buscas no existe o ha sido movida.",
+      "goHome": "Ir al Inicio"
+    },
+    "500": {
+      "title": "Error del Servidor",
+      "description": "Algo salió mal de nuestro lado. Por favor inténtalo más tarde.",
+      "tryAgain": "Intentar de Nuevo"
+    },
+    "offline": {
+      "title": "Sin Conexión",
+      "description": "Por favor revisa tu conexión a internet e inténtalo de nuevo.",
+      "retry": "Reintentar"
+    },
+    "unauthorized": {
+      "title": "No Autorizado",
+      "description": "No tienes permisos para acceder a este recurso.",
+      "signIn": "Iniciar Sesión"
+    },
+    "forbidden": {
+      "title": "Prohibido",
+      "description": "El acceso a este recurso está prohibido.",
+      "goBack": "Volver"
+    }
+  },
+  "validation": {
+    "required": "Este campo es requerido",
+    "email": "Por favor ingresa un email válido",
+    "minLength": "Debe tener al menos {min} caracteres",
+    "maxLength": "No debe exceder {max} caracteres",
+    "pattern": "Formato inválido",
+    "numeric": "Debe ser un número",
+    "url": "Por favor ingresa una URL válida"
+  },
+  "meta": {
+    "title": "AIT3E-Stack-Starter",
+    "description": "La plantilla de Next.js más completa con herramientas modernas y mejores prácticas"
+  }
+}

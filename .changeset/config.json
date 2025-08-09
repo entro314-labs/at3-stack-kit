@@ -1,0 +1,15 @@
+{
+  "changelog": [
+    "@changesets/changelog-github",
+    {
+      "repo": "entro314-labs/at3-stack-kit"
+    }
+  ],
+  "commit": false,
+  "fixed": [],
+  "linked": [],
+  "access": "public",
+  "baseBranch": "main",
+  "updateInternalDependencies": "patch",
+  "ignore": []
+}

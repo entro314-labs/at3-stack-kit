@@ -1,0 +1,2 @@
+# Run type checking before push (skip tests for now)
+pnpm run typecheck

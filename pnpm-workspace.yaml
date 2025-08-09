@@ -1,0 +1,17 @@
+# AT3 Stack Kit Monorepo
+# Workspace configuration for all AT3 packages
+
+packages:
+  # Main stack kit app
+  - '.'
+  # CLI packages
+  - 'packages/at3-stack-kit'
+  - 'packages/create-at3-app'
+  - 'packages/at3-toolkit'
+
+# pnpm configuration
+onlyBuiltDependencies:
+  - esbuild
+  - '@swc/core'
+  - 'sharp'
+  - 'supabase'

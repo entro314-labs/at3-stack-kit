@@ -1,0 +1,219 @@
+version: 2
+updates:
+  # Main project dependencies
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    assignees:
+      - "entro314-labs"
+    reviewers:
+      - "entro314-labs"
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+    open-pull-requests-limit: 5
+    groups:
+      # Group Next.js and React updates
+      nextjs:
+        patterns:
+          - "next"
+          - "react"
+          - "react-dom"
+          - "@types/react"
+          - "@types/react-dom"
+      # Group AI SDK updates
+      ai-sdks:
+        patterns:
+          - "@ai-sdk/*"
+          - "ai"
+          - "openai"
+          - "@anthropic-ai/*"
+          - "@google/generative-ai"
+      # Group UI component updates
+      ui-components:
+        patterns:
+          - "@radix-ui/*"
+          - "lucide-react"
+          - "class-variance-authority"
+          - "cmdk"
+      # Group testing dependencies
+      testing:
+        patterns:
+          - "vitest"
+          - "@vitest/*"
+          - "@testing-library/*"
+          - "@playwright/test"
+          - "playwright"
+      # Group build tools
+      build-tools:
+        patterns:
+          - "typescript"
+          - "@types/*"
+          - "tsup"
+          - "@swc/*"
+          - "eslint*"
+          - "@biomejs/biome"
+      # Group Supabase dependencies
+      supabase:
+        patterns:
+          - "@supabase/*"
+          - "supabase"
+      # Group Tailwind CSS
+      tailwind:
+        patterns:
+          - "tailwindcss"
+          - "@tailwindcss/*"
+          - "postcss"
+          - "autoprefixer"
+
+  # create-at3-app package
+  - package-ecosystem: "npm"
+    directory: "/packages/create-at3-app"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "10:00"
+    assignees:
+      - "entro314-labs"
+    reviewers:
+      - "entro314-labs"
+    commit-message:
+      prefix: "deps(create-at3-app)"
+      include: "scope"
+    open-pull-requests-limit: 3
+    groups:
+      # Group CLI dependencies
+      cli-tools:
+        patterns:
+          - "@clack/prompts"
+          - "chalk"
+          - "commander"
+          - "cross-spawn"
+          - "fs-extra"
+      # Group build tools
+      build-tools:
+        patterns:
+          - "typescript"
+          - "tsup"
+          - "@types/*"
+          - "vitest"
+
+  # at3-stack-kit package  
+  - package-ecosystem: "npm"
+    directory: "/packages/at3-stack-kit"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "10:30"
+    assignees:
+      - "entro314-labs"
+    reviewers:
+      - "entro314-labs"
+    commit-message:
+      prefix: "deps(at3-stack-kit)"
+      include: "scope"
+    open-pull-requests-limit: 3
+    groups:
+      # Group CLI dependencies
+      cli-tools:
+        patterns:
+          - "@clack/prompts"
+          - "chalk"
+          - "commander"
+          - "cross-spawn"
+          - "fs-extra"
+          - "glob"
+          - "gradient-string"
+          - "figures"
+          - "boxen"
+      # Group migration tools
+      migration-tools:
+        patterns:
+          - "jscodeshift"
+          - "detect-package-manager"
+      # Group build tools
+      build-tools:
+        patterns:
+          - "typescript"
+          - "tsup"
+          - "@types/*"
+          - "vitest"
+
+  # at3-toolkit package
+  - package-ecosystem: "npm"
+    directory: "/packages/at3-toolkit"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "11:00"
+    assignees:
+      - "entro314-labs"
+    reviewers:
+      - "entro314-labs"
+    commit-message:
+      prefix: "deps(at3-toolkit)"
+      include: "scope"
+    open-pull-requests-limit: 3
+    groups:
+      # Group CLI dependencies
+      cli-tools:
+        patterns:
+          - "@clack/prompts"
+          - "boxen"
+          - "chalk"
+          - "cli-table3"
+          - "commander"
+          - "figures"
+          - "gradient-string"
+      # Group configuration tools
+      config-tools:
+        patterns:
+          - "detect-package-manager"
+          - "fs-extra"
+          - "glob"
+          - "semver"
+          - "toml"
+          - "yaml"
+      # Group linting and testing
+      dev-tools:
+        patterns:
+          - "@biomejs/biome"
+          - "typescript"
+          - "vitest"
+          - "@vitest/*"
+          - "@types/*"
+
+  # GitHub Actions dependencies
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "12:00"
+    assignees:
+      - "entro314-labs"
+    reviewers:
+      - "entro314-labs"
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+    open-pull-requests-limit: 2
+
+  # Docker dependencies (if any)
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"  
+      time: "12:30"
+    assignees:
+      - "entro314-labs"
+    reviewers:
+      - "entro314-labs"
+    commit-message:
+      prefix: "docker"
+      include: "scope"
+    open-pull-requests-limit: 2

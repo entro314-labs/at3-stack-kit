@@ -1,0 +1,227 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "success": "Success",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "update": "Update",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "search": "Search",
+    "filter": "Filter",
+    "sort": "Sort",
+    "export": "Export",
+    "import": "Import",
+    "copy": "Copy",
+    "copied": "Copied!",
+    "submit": "Submit",
+    "confirm": "Confirm",
+    "close": "Close"
+  },
+  "navigation": {
+    "home": "Home",
+    "about": "About",
+    "contact": "Contact",
+    "blog": "Blog",
+    "dashboard": "Dashboard",
+    "profile": "Profile",
+    "settings": "Settings",
+    "signIn": "Sign In",
+    "signUp": "Sign Up",
+    "signOut": "Sign Out"
+  },
+  "auth": {
+    "signIn": {
+      "title": "Sign In",
+      "description": "Enter your email and password to sign in to your account",
+      "email": "Email",
+      "emailPlaceholder": "name@example.com",
+      "password": "Password",
+      "passwordPlaceholder": "Enter your password",
+      "signInButton": "Sign In",
+      "forgotPassword": "Forgot your password?",
+      "noAccount": "Don't have an account?",
+      "signUpLink": "Sign up",
+      "orContinueWith": "Or continue with",
+      "github": "GitHub",
+      "google": "Google",
+      "errors": {
+        "invalidEmail": "Please enter a valid email address",
+        "passwordTooShort": "Password must be at least 6 characters",
+        "invalidCredentials": "Invalid email or password",
+        "tooManyAttempts": "Too many attempts. Please try again later",
+        "userNotFound": "No account found with this email",
+        "emailNotConfirmed": "Please confirm your email address first"
+      }
+    },
+    "signUp": {
+      "title": "Create Account",
+      "description": "Enter your details below to create your account",
+      "email": "Email",
+      "emailPlaceholder": "name@example.com",
+      "password": "Password",
+      "passwordPlaceholder": "Create a password",
+      "confirmPassword": "Confirm Password",
+      "confirmPasswordPlaceholder": "Confirm your password",
+      "createAccountButton": "Create Account",
+      "alreadyHaveAccount": "Already have an account?",
+      "signInLink": "Sign in",
+      "orContinueWith": "Or continue with",
+      "checkEmail": {
+        "title": "Check Your Email",
+        "description": "We've sent you a confirmation link to complete your registration",
+        "message": "Please check your email and click the confirmation link to activate your account."
+      },
+      "errors": {
+        "invalidEmail": "Please enter a valid email address",
+        "passwordTooShort": "Password must be at least 6 characters",
+        "passwordsDontMatch": "Passwords don't match",
+        "emailAlreadyExists": "An account with this email already exists",
+        "weakPassword": "Password is too weak. Please use at least 8 characters with numbers and symbols"
+      }
+    },
+    "resetPassword": {
+      "title": "Reset Password",
+      "description": "Enter your email address and we'll send you a password reset link",
+      "email": "Email",
+      "emailPlaceholder": "name@example.com",
+      "sendResetLink": "Send Reset Link",
+      "backToSignIn": "Back to Sign In",
+      "checkEmail": {
+        "title": "Check Your Email",
+        "description": "We've sent a password reset link to your email address",
+        "message": "If an account with that email exists, you'll receive a password reset link shortly.",
+        "didntReceive": "Didn't receive the email? Check your spam folder or try again.",
+        "sendAnother": "Send Another Email"
+      },
+      "errors": {
+        "invalidEmail": "Please enter a valid email address",
+        "emailNotFound": "No account found with this email address"
+      }
+    },
+    "authError": {
+      "title": "Authentication Error",
+      "description": "Sorry, we couldn't complete your authentication",
+      "reasons": "There was an error processing your authentication request. This could happen if:",
+      "reasonsList": [
+        "The authentication link has expired",
+        "The link has already been used",
+        "There was a network issue"
+      ],
+      "tryAgain": "Try Again",
+      "goHome": "Go Home"
+    }
+  },
+  "dashboard": {
+    "welcome": "Welcome back!",
+    "overview": "Overview",
+    "analytics": "Analytics",
+    "reports": "Reports",
+    "users": "Users",
+    "content": "Content",
+    "posts": "Posts",
+    "pages": "Pages",
+    "media": "Media",
+    "comments": "Comments"
+  },
+  "profile": {
+    "title": "Profile",
+    "personalInfo": "Personal Information",
+    "username": "Username",
+    "fullName": "Full Name",
+    "email": "Email",
+    "bio": "Bio",
+    "website": "Website",
+    "location": "Location",
+    "avatar": "Avatar",
+    "updateProfile": "Update Profile",
+    "profileUpdated": "Profile updated successfully",
+    "errors": {
+      "usernameRequired": "Username is required",
+      "usernameTooShort": "Username must be at least 3 characters",
+      "usernameInvalid": "Username can only contain letters, numbers, and underscores",
+      "usernameTaken": "This username is already taken",
+      "invalidEmail": "Please enter a valid email address",
+      "invalidWebsite": "Please enter a valid website URL"
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "account": "Account",
+    "preferences": "Preferences",
+    "privacy": "Privacy",
+    "security": "Security",
+    "notifications": "Notifications",
+    "appearance": "Appearance",
+    "language": "Language",
+    "theme": "Theme",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System",
+    "emailNotifications": "Email Notifications",
+    "pushNotifications": "Push Notifications",
+    "marketingEmails": "Marketing Emails",
+    "securityAlerts": "Security Alerts",
+    "saveSettings": "Save Settings",
+    "settingsSaved": "Settings saved successfully"
+  },
+  "blog": {
+    "title": "Blog",
+    "readMore": "Read More",
+    "publishedOn": "Published on",
+    "by": "by",
+    "tags": "Tags",
+    "categories": "Categories",
+    "relatedPosts": "Related Posts",
+    "noPostsFound": "No posts found",
+    "searchPosts": "Search posts...",
+    "filterByTag": "Filter by tag",
+    "latestPosts": "Latest Posts",
+    "popularPosts": "Popular Posts"
+  },
+  "errors": {
+    "404": {
+      "title": "Page Not Found",
+      "description": "The page you're looking for doesn't exist or has been moved.",
+      "goHome": "Go Home"
+    },
+    "500": {
+      "title": "Server Error",
+      "description": "Something went wrong on our end. Please try again later.",
+      "tryAgain": "Try Again"
+    },
+    "offline": {
+      "title": "You're Offline",
+      "description": "Please check your internet connection and try again.",
+      "retry": "Retry"
+    },
+    "unauthorized": {
+      "title": "Unauthorized",
+      "description": "You don't have permission to access this resource.",
+      "signIn": "Sign In"
+    },
+    "forbidden": {
+      "title": "Forbidden",
+      "description": "Access to this resource is forbidden.",
+      "goBack": "Go Back"
+    }
+  },
+  "validation": {
+    "required": "This field is required",
+    "email": "Please enter a valid email address",
+    "minLength": "Must be at least {min} characters",
+    "maxLength": "Must not exceed {max} characters",
+    "pattern": "Invalid format",
+    "numeric": "Must be a number",
+    "url": "Please enter a valid URL"
+  },
+  "meta": {
+    "title": "AIT3E-Stack-Starter",
+    "description": "The most comprehensive Next.js starter template with modern tooling and best practices"
+  }
+}

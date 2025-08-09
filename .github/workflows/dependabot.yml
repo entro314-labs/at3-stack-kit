@@ -1,0 +1,168 @@
+name: Dependabot Auto-merge
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  dependabot:
+    name: Dependabot PR Check
+    runs-on: ubuntu-latest
+    if: github.actor == 'dependabot[bot]'
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 'latest'
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build packages
+        run: pnpm build
+
+      - name: Run tests
+        run: pnpm test
+
+      - name: Run type check
+        run: pnpm type-check
+
+      - name: Run lint
+        run: pnpm lint
+
+      - name: Analyze Dependabot PR
+        id: analyze
+        run: |
+          # Extract PR title to determine update type
+          PR_TITLE="${{ github.event.pull_request.title }}"
+          echo "PR Title: $PR_TITLE"
+          
+          # Check if this is a patch version update
+          if echo "$PR_TITLE" | grep -qE "(patch|fix|security)" || echo "$PR_TITLE" | grep -qE "from [0-9]+\.[0-9]+\.[0-9]+ to [0-9]+\.[0-9]+\.[0-9]+$"; then
+            echo "AUTO_MERGEABLE=true" >> $GITHUB_OUTPUT
+            echo "UPDATE_TYPE=patch" >> $GITHUB_OUTPUT
+          # Check if this is a minor version update  
+          elif echo "$PR_TITLE" | grep -qE "from [0-9]+\.[0-9]+ to [0-9]+\.[0-9]+"; then
+            echo "AUTO_MERGEABLE=false" >> $GITHUB_OUTPUT
+            echo "UPDATE_TYPE=minor" >> $GITHUB_OUTPUT
+          # Major version updates require manual review
+          else
+            echo "AUTO_MERGEABLE=false" >> $GITHUB_OUTPUT
+            echo "UPDATE_TYPE=major" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Add safe update label
+        if: steps.analyze.outputs.AUTO_MERGEABLE == 'true'
+        run: |
+          gh pr edit ${{ github.event.pull_request.number }} --add-label "dependencies,safe-to-merge"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Add review required label
+        if: steps.analyze.outputs.AUTO_MERGEABLE == 'false'
+        run: |
+          gh pr edit ${{ github.event.pull_request.number }} --add-label "dependencies,review-required"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Comment on PR
+        run: |
+          if [ "${{ steps.analyze.outputs.AUTO_MERGEABLE }}" == "true" ]; then
+            gh pr comment ${{ github.event.pull_request.number }} --body "🤖 **Dependabot Analysis**: This appears to be a safe ${{ steps.analyze.outputs.UPDATE_TYPE }} update.
+            
+            ✅ All tests passed
+            ✅ Build successful  
+            ✅ Type check passed
+            ✅ Linting passed
+            
+            This PR is marked as safe to merge after manual review."
+          else
+            gh pr comment ${{ github.event.pull_request.number }} --body "🤖 **Dependabot Analysis**: This is a ${{ steps.analyze.outputs.UPDATE_TYPE }} update that requires manual review.
+            
+            ✅ All tests passed
+            ✅ Build successful
+            ✅ Type check passed  
+            ✅ Linting passed
+            
+            ⚠️ Please review for potential breaking changes before merging."
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Optional: Enable auto-merge for patch updates
+      # Uncomment the following steps to enable auto-merge for safe updates
+      # 
+      # - name: Enable auto-merge
+      #   if: steps.analyze.outputs.AUTO_MERGEABLE == 'true'
+      #   run: |
+      #     gh pr merge ${{ github.event.pull_request.number }} --auto --squash
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  security-check:
+    name: Security Vulnerability Check
+    runs-on: ubuntu-latest
+    if: github.actor == 'dependabot[bot]' && contains(github.event.pull_request.title, 'security')
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 'latest'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Audit dependencies
+        run: |
+          echo "🔍 Running security audit..."
+          pnpm audit --audit-level moderate
+          echo "✅ Security audit completed"
+
+      - name: Priority security label
+        run: |
+          gh pr edit ${{ github.event.pull_request.number }} --add-label "security,high-priority"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Security update comment
+        run: |
+          gh pr comment ${{ github.event.pull_request.number }} --body "🚨 **Security Update Detected**
+          
+          This PR contains security fixes and should be reviewed and merged promptly.
+          
+          ✅ Security audit passed
+          ⚠️ Please verify the fixes address the intended vulnerabilities"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
