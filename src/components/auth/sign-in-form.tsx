@@ -88,13 +88,13 @@ export function SignInForm({ className, redirectTo = "/" }: SignInFormProps) {
   return (
     <Card className={cn("w-full max-w-md", className)}>
       <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl font-bold">Sign In</CardTitle>
+        <CardTitle className="font-bold text-2xl">Sign In</CardTitle>
         <CardDescription>Enter your email and password to sign in to your account</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {error && (
-          <div className="rounded-md bg-destructive/15 border border-destructive/20 px-4 py-3">
-            <p className="text-sm text-destructive">{error}</p>
+          <div className="rounded-md border border-destructive/20 bg-destructive/15 px-4 py-3">
+            <p className="text-destructive text-sm">{error}</p>
           </div>
         )}
 
@@ -109,7 +109,7 @@ export function SignInForm({ className, redirectTo = "/" }: SignInFormProps) {
               disabled={isLoading}
             />
             {form.formState.errors.email && (
-              <p className="text-sm text-destructive">{form.formState.errors.email.message}</p>
+              <p className="text-destructive text-sm">{form.formState.errors.email.message}</p>
             )}
           </div>
 
@@ -127,7 +127,7 @@ export function SignInForm({ className, redirectTo = "/" }: SignInFormProps) {
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="absolute right-2 top-1/2 h-6 w-6 -translate-y-1/2"
+                className="-translate-y-1/2 absolute top-1/2 right-2 h-6 w-6"
                 onClick={() => setShowPassword(!showPassword)}
                 disabled={isLoading}
               >
@@ -135,7 +135,7 @@ export function SignInForm({ className, redirectTo = "/" }: SignInFormProps) {
               </Button>
             </div>
             {form.formState.errors.password && (
-              <p className="text-sm text-destructive">{form.formState.errors.password.message}</p>
+              <p className="text-destructive text-sm">{form.formState.errors.password.message}</p>
             )}
           </div>
 
@@ -191,7 +191,7 @@ export function SignInForm({ className, redirectTo = "/" }: SignInFormProps) {
         </div>
       </CardContent>
       <CardFooter>
-        <p className="text-center text-sm text-muted-foreground w-full">
+        <p className="w-full text-center text-muted-foreground text-sm">
           Don't have an account?{" "}
           <a href="/auth/sign-up" className="underline underline-offset-4 hover:text-primary">
             Sign up

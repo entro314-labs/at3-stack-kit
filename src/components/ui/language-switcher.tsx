@@ -63,7 +63,7 @@ export function LanguageSwitcher({ className }: LanguageSwitcherProps) {
             <span className="mr-2">{languageFlags[lng]}</span>
             {languageNames[lng]}
             {locale === lng && (
-              <span className="ml-auto text-xs text-muted-foreground">Current</span>
+              <span className="ml-auto text-muted-foreground text-xs">Current</span>
             )}
           </DropdownMenuItem>
         ))}

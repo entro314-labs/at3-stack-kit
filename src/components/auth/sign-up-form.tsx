@@ -98,20 +98,20 @@ export function SignUpForm({ className, redirectTo = "/" }: SignUpFormProps) {
     return (
       <Card className={cn("w-full max-w-md", className)}>
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold">Check Your Email</CardTitle>
+          <CardTitle className="font-bold text-2xl">Check Your Email</CardTitle>
           <CardDescription>
             We've sent you a confirmation link to complete your registration
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="rounded-md bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 px-4 py-3">
-            <p className="text-sm text-green-800 dark:text-green-200">
+          <div className="rounded-md border border-green-200 bg-green-50 px-4 py-3 dark:border-green-800 dark:bg-green-900/20">
+            <p className="text-green-800 text-sm dark:text-green-200">
               Please check your email and click the confirmation link to activate your account.
             </p>
           </div>
         </CardContent>
         <CardFooter>
-          <p className="text-center text-sm text-muted-foreground w-full">
+          <p className="w-full text-center text-muted-foreground text-sm">
             Already have an account?{" "}
             <a href="/auth/sign-in" className="underline underline-offset-4 hover:text-primary">
               Sign in
@@ -125,13 +125,13 @@ export function SignUpForm({ className, redirectTo = "/" }: SignUpFormProps) {
   return (
     <Card className={cn("w-full max-w-md", className)}>
       <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl font-bold">Create Account</CardTitle>
+        <CardTitle className="font-bold text-2xl">Create Account</CardTitle>
         <CardDescription>Enter your details below to create your account</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {error && (
-          <div className="rounded-md bg-destructive/15 border border-destructive/20 px-4 py-3">
-            <p className="text-sm text-destructive">{error}</p>
+          <div className="rounded-md border border-destructive/20 bg-destructive/15 px-4 py-3">
+            <p className="text-destructive text-sm">{error}</p>
           </div>
         )}
 
@@ -146,7 +146,7 @@ export function SignUpForm({ className, redirectTo = "/" }: SignUpFormProps) {
               disabled={isLoading}
             />
             {form.formState.errors.email && (
-              <p className="text-sm text-destructive">{form.formState.errors.email.message}</p>
+              <p className="text-destructive text-sm">{form.formState.errors.email.message}</p>
             )}
           </div>
 
@@ -164,7 +164,7 @@ export function SignUpForm({ className, redirectTo = "/" }: SignUpFormProps) {
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="absolute right-2 top-1/2 h-6 w-6 -translate-y-1/2"
+                className="-translate-y-1/2 absolute top-1/2 right-2 h-6 w-6"
                 onClick={() => setShowPassword(!showPassword)}
                 disabled={isLoading}
               >
@@ -172,7 +172,7 @@ export function SignUpForm({ className, redirectTo = "/" }: SignUpFormProps) {
               </Button>
             </div>
             {form.formState.errors.password && (
-              <p className="text-sm text-destructive">{form.formState.errors.password.message}</p>
+              <p className="text-destructive text-sm">{form.formState.errors.password.message}</p>
             )}
           </div>
 
@@ -190,7 +190,7 @@ export function SignUpForm({ className, redirectTo = "/" }: SignUpFormProps) {
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="absolute right-2 top-1/2 h-6 w-6 -translate-y-1/2"
+                className="-translate-y-1/2 absolute top-1/2 right-2 h-6 w-6"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                 disabled={isLoading}
               >
@@ -198,7 +198,7 @@ export function SignUpForm({ className, redirectTo = "/" }: SignUpFormProps) {
               </Button>
             </div>
             {form.formState.errors.confirmPassword && (
-              <p className="text-sm text-destructive">
+              <p className="text-destructive text-sm">
                 {form.formState.errors.confirmPassword.message}
               </p>
             )}
@@ -256,7 +256,7 @@ export function SignUpForm({ className, redirectTo = "/" }: SignUpFormProps) {
         </div>
       </CardContent>
       <CardFooter>
-        <p className="text-center text-sm text-muted-foreground w-full">
+        <p className="w-full text-center text-muted-foreground text-sm">
           Already have an account?{" "}
           <a href="/auth/sign-in" className="underline underline-offset-4 hover:text-primary">
             Sign in

@@ -40,9 +40,9 @@ export function UserMenu({ user, className }: UserMenuProps) {
   };
 
   const getUserInitials = (email: string | undefined) => {
-    if (!email) return "U";
+    if (!email) { return "U"; }
     const emailPrefix = email.split("@")[0];
-    if (!emailPrefix) return "U";
+    if (!emailPrefix) { return "U"; }
     return emailPrefix
       .split(".")
       .map((name) => name.charAt(0).toUpperCase())
@@ -78,8 +78,8 @@ export function UserMenu({ user, className }: UserMenuProps) {
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">{getUserDisplayName()}</p>
-            <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+            <p className="font-medium text-sm leading-none">{getUserDisplayName()}</p>
+            <p className="text-muted-foreground text-xs leading-none">{user.email}</p>
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />

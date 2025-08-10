@@ -38,7 +38,7 @@ export function ChatInterface({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim() || isLoading) return;
+    if (!input.trim() || isLoading) { return; }
 
     const message = input.trim();
     setInput("");
@@ -70,7 +70,7 @@ export function ChatInterface({
         <ScrollArea ref={scrollAreaRef} className={cn("px-6", height)}>
           <div className="space-y-4 pb-4">
             {messages.length === 0 && (
-              <div className="flex items-center justify-center h-32 text-muted-foreground">
+              <div className="flex h-32 items-center justify-center text-muted-foreground">
                 <p>Start a conversation with the AI assistant</p>
               </div>
             )}
@@ -84,7 +84,7 @@ export function ChatInterface({
                 )}
               >
                 {message.role === "assistant" && showAvatar && (
-                  <Avatar className="h-8 w-8 mt-0.5">
+                  <Avatar className="mt-0.5 h-8 w-8">
                     <AvatarFallback>
                       <Bot className="h-4 w-4" />
                     </AvatarFallback>
@@ -97,7 +97,7 @@ export function ChatInterface({
                     message.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted"
                   )}
                 >
-                  <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                  <p className="whitespace-pre-wrap text-sm">{message.content}</p>
                   <div className="mt-1">
                     <time className="text-xs opacity-70">
                       {message.timestamp.toLocaleTimeString([], {
@@ -109,7 +109,7 @@ export function ChatInterface({
                 </div>
 
                 {message.role === "user" && showAvatar && (
-                  <Avatar className="h-8 w-8 mt-0.5">
+                  <Avatar className="mt-0.5 h-8 w-8">
                     <AvatarFallback>
                       <User className="h-4 w-4" />
                     </AvatarFallback>
@@ -119,18 +119,18 @@ export function ChatInterface({
             ))}
 
             {isLoading && (
-              <div className="flex gap-3 justify-start">
+              <div className="flex justify-start gap-3">
                 {showAvatar && (
-                  <Avatar className="h-8 w-8 mt-0.5">
+                  <Avatar className="mt-0.5 h-8 w-8">
                     <AvatarFallback>
                       <Bot className="h-4 w-4" />
                     </AvatarFallback>
                   </Avatar>
                 )}
-                <div className="bg-muted rounded-lg px-4 py-2">
+                <div className="rounded-lg bg-muted px-4 py-2">
                   <div className="flex items-center gap-2">
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    <span className="text-sm text-muted-foreground">AI is typing...</span>
+                    <span className="text-muted-foreground text-sm">AI is typing...</span>
                   </div>
                 </div>
               </div>
@@ -166,8 +166,8 @@ export function ChatInterface({
 
       {error && (
         <div className="px-6 pb-4">
-          <div className="rounded-md bg-destructive/15 border border-destructive/20 px-3 py-2">
-            <p className="text-sm text-destructive">Error: {error.message}</p>
+          <div className="rounded-md border border-destructive/20 bg-destructive/15 px-3 py-2">
+            <p className="text-destructive text-sm">Error: {error.message}</p>
           </div>
         </div>
       )}

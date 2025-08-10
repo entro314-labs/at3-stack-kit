@@ -31,7 +31,7 @@ export function useAICompletion(options: UseAICompletionOptions = {}): UseAIComp
 
   const generate = useCallback(
     async (prompt: string) => {
-      if (isLoading) return;
+      if (isLoading) { return; }
 
       setIsLoading(true);
       setError(null);
@@ -156,7 +156,7 @@ export function useChat(options: UseChatOptions = {}): UseChatReturn {
 
   const sendMessage = useCallback(
     async (content: string) => {
-      if (isLoading) return;
+      if (isLoading) { return; }
 
       const userMessage: ChatMessage = {
         id: `user-${Date.now()}`,

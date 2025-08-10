@@ -1,6 +1,6 @@
 {
   "name": "@entro314labs/create-at3-app",
-  "version": "0.1.0-alpha.1",
+  "version": "0.1.0-alpha.2",
   "description": "Scaffold new AT3 Stack projects with AI, edge, and modern tooling",
   "keywords": [
     "at3",

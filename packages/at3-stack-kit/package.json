@@ -1,6 +1,6 @@
 {
   "name": "@entro314labs/at3-stack-kit",
-  "version": "0.1.0-alpha.1",
+  "version": "0.1.0-alpha.2",
   "description": "Upgrade existing projects to AT3 Stack with intelligent migration",
   "keywords": [
     "at3",

@@ -24,7 +24,7 @@ export function SimpleChat() {
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto">
+    <Card className="mx-auto w-full max-w-md">
       <CardHeader>
         <CardTitle>AI Chat</CardTitle>
       </CardHeader>
@@ -32,7 +32,7 @@ export function SimpleChat() {
         {messages.map((message) => (
           <div
             key={message.id}
-            className={`p-3 rounded ${message.role === "user" ? "bg-blue-100" : "bg-gray-100"}`}
+            className={`rounded p-3 ${message.role === "user" ? "bg-blue-100" : "bg-gray-100"}`}
           >
             <strong>{message.role}:</strong>
             <div>

@@ -71,16 +71,16 @@ export function PasswordResetForm({ className, onBack }: PasswordResetFormProps)
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-100 dark:bg-green-900">
             <Mail className="h-6 w-6 text-green-600 dark:text-green-400" />
           </div>
-          <CardTitle className="text-2xl font-bold">Check Your Email</CardTitle>
+          <CardTitle className="font-bold text-2xl">Check Your Email</CardTitle>
           <CardDescription>We've sent a password reset link to your email address</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="rounded-md bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 px-4 py-3">
-            <p className="text-sm text-green-800 dark:text-green-200">
+          <div className="rounded-md border border-green-200 bg-green-50 px-4 py-3 dark:border-green-800 dark:bg-green-900/20">
+            <p className="text-green-800 text-sm dark:text-green-200">
               If an account with that email exists, you'll receive a password reset link shortly.
             </p>
           </div>
-          <p className="text-sm text-muted-foreground text-center">
+          <p className="text-center text-muted-foreground text-sm">
             Didn't receive the email? Check your spam folder or try again.
           </p>
         </CardContent>
@@ -109,15 +109,15 @@ export function PasswordResetForm({ className, onBack }: PasswordResetFormProps)
   return (
     <Card className={cn("w-full max-w-md", className)}>
       <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl font-bold">Reset Password</CardTitle>
+        <CardTitle className="font-bold text-2xl">Reset Password</CardTitle>
         <CardDescription>
           Enter your email address and we'll send you a password reset link
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {error && (
-          <div className="rounded-md bg-destructive/15 border border-destructive/20 px-4 py-3">
-            <p className="text-sm text-destructive">{error}</p>
+          <div className="rounded-md border border-destructive/20 bg-destructive/15 px-4 py-3">
+            <p className="text-destructive text-sm">{error}</p>
           </div>
         )}
 
@@ -132,7 +132,7 @@ export function PasswordResetForm({ className, onBack }: PasswordResetFormProps)
               disabled={isLoading}
             />
             {form.formState.errors.email && (
-              <p className="text-sm text-destructive">{form.formState.errors.email.message}</p>
+              <p className="text-destructive text-sm">{form.formState.errors.email.message}</p>
             )}
           </div>
 

@@ -79,12 +79,12 @@ export function VercelCompletion({
 
   const handleSubmitWithModel = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim() || isLoading) return;
+    if (!input.trim() || isLoading) { return; }
     handleSubmit(e);
   };
 
   const handleCopy = async () => {
-    if (!completion) return;
+    if (!completion) { return; }
 
     try {
       await navigator.clipboard.writeText(completion);
@@ -119,9 +119,9 @@ export function VercelCompletion({
               <SelectContent>
                 {AI_MODEL_OPTIONS.map((model) => (
                   <SelectItem key={model.value} value={model.value}>
-                    <div className="flex items-center justify-between w-full">
+                    <div className="flex w-full items-center justify-between">
                       <span>{model.label}</span>
-                      <span className="text-xs text-muted-foreground ml-2">{model.provider}</span>
+                      <span className="ml-2 text-muted-foreground text-xs">{model.provider}</span>
                     </div>
                   </SelectItem>
                 ))}
@@ -174,8 +174,8 @@ export function VercelCompletion({
         </form>
 
         {error && (
-          <div className="rounded-md bg-destructive/15 border border-destructive/20 px-4 py-3">
-            <p className="text-sm text-destructive">Error: {error.message}</p>
+          <div className="rounded-md border border-destructive/20 bg-destructive/15 px-4 py-3">
+            <p className="text-destructive text-sm">Error: {error.message}</p>
           </div>
         )}
 
@@ -184,7 +184,7 @@ export function VercelCompletion({
             <div className="flex items-center justify-between">
               <Label>Generated Content</Label>
               <Button variant="ghost" size="sm" onClick={handleCopy} className="h-8 px-2">
-                <Copy className="h-4 w-4 mr-1" />
+                <Copy className="mr-1 h-4 w-4" />
                 {copied ? "Copied!" : "Copy"}
               </Button>
             </div>

@@ -53,12 +53,12 @@ export function CompletionForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!prompt.trim() || isLoading) return;
+    if (!prompt.trim() || isLoading) { return; }
     await generate(prompt);
   };
 
   const handleCopy = async () => {
-    if (!completion) return;
+    if (!completion) { return; }
 
     try {
       await navigator.clipboard.writeText(completion);
@@ -99,7 +99,7 @@ export function CompletionForm({
           </div>
 
           {showSettings && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="provider">Provider</Label>
                 <Select
@@ -123,7 +123,7 @@ export function CompletionForm({
                 <Select
                   value={model}
                   onValueChange={(value) => setModel(value)}
-                  disabled={isLoading || !availableModels.length}
+                  disabled={isLoading || availableModels.length === 0}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -186,8 +186,8 @@ export function CompletionForm({
         </form>
 
         {error && (
-          <div className="rounded-md bg-destructive/15 border border-destructive/20 px-4 py-3">
-            <p className="text-sm text-destructive">Error: {error.message}</p>
+          <div className="rounded-md border border-destructive/20 bg-destructive/15 px-4 py-3">
+            <p className="text-destructive text-sm">Error: {error.message}</p>
           </div>
         )}
 
@@ -196,12 +196,12 @@ export function CompletionForm({
             <div className="flex items-center justify-between">
               <Label>Generated Content</Label>
               <Button variant="ghost" size="sm" onClick={handleCopy} className="h-8 px-2">
-                <Copy className="h-4 w-4 mr-1" />
+                <Copy className="mr-1 h-4 w-4" />
                 {copied ? "Copied!" : "Copy"}
               </Button>
             </div>
             <div className="rounded-md border bg-muted p-4">
-              <pre className="whitespace-pre-wrap text-sm font-mono">{completion}</pre>
+              <pre className="whitespace-pre-wrap font-mono text-sm">{completion}</pre>
             </div>
           </div>
         )}

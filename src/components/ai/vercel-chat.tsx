@@ -82,7 +82,7 @@ export function VercelChat({
 
   const handleSubmitWithModel = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim() || isLoading) return;
+    if (!input.trim() || isLoading) { return; }
     sendMessage({ text: input });
     setInput("");
   };
@@ -112,9 +112,9 @@ export function VercelChat({
         </div>
 
         {showSettings && showModelSelector && (
-          <div className="pt-2 border-t">
+          <div className="border-t pt-2">
             <div className="flex items-center gap-2">
-              <span className="text-sm font-medium">Model:</span>
+              <span className="font-medium text-sm">Model:</span>
               <Select value={selectedModel} onValueChange={handleModelChange}>
                 <SelectTrigger className="w-[200px]">
                   <SelectValue />
@@ -122,9 +122,9 @@ export function VercelChat({
                 <SelectContent>
                   {AI_MODEL_OPTIONS.map((model) => (
                     <SelectItem key={model.value} value={model.value}>
-                      <div className="flex items-center justify-between w-full">
+                      <div className="flex w-full items-center justify-between">
                         <span>{model.label}</span>
-                        <span className="text-xs text-muted-foreground ml-2">{model.provider}</span>
+                        <span className="ml-2 text-muted-foreground text-xs">{model.provider}</span>
                       </div>
                     </SelectItem>
                   ))}
@@ -139,7 +139,7 @@ export function VercelChat({
         <ScrollArea ref={scrollAreaRef} className={cn("px-6", height)}>
           <div className="space-y-4 pb-4">
             {messages.length === 0 && (
-              <div className="flex items-center justify-center h-32 text-muted-foreground">
+              <div className="flex h-32 items-center justify-center text-muted-foreground">
                 <p>Start a conversation with the AI assistant</p>
               </div>
             )}
@@ -153,7 +153,7 @@ export function VercelChat({
                 )}
               >
                 {message.role === "assistant" && showAvatar && (
-                  <Avatar className="h-8 w-8 mt-0.5">
+                  <Avatar className="mt-0.5 h-8 w-8">
                     <AvatarFallback>
                       <Bot className="h-4 w-4" />
                     </AvatarFallback>
@@ -166,7 +166,7 @@ export function VercelChat({
                     message.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted"
                   )}
                 >
-                  <div className="text-sm whitespace-pre-wrap">
+                  <div className="whitespace-pre-wrap text-sm">
                     {message.parts.map((part, index) => {
                       switch (part.type) {
                         case "text":
@@ -180,10 +180,10 @@ export function VercelChat({
                               toolPart.state === "input-available"
                             ) {
                               return (
-                                <div key={index} className="bg-blue-100 p-2 rounded mt-1">
+                                <div key={index} className="mt-1 rounded bg-blue-100 p-2">
                                   <small>🔧 Using tool: {part.type.replace("tool-", "")}</small>
                                   {toolPart.input && (
-                                    <div className="text-xs mt-1">
+                                    <div className="mt-1 text-xs">
                                       Input: {JSON.stringify(toolPart.input)}
                                     </div>
                                   )}
@@ -192,9 +192,9 @@ export function VercelChat({
                             }
                             if (toolPart.state === "output-available") {
                               return (
-                                <div key={index} className="bg-green-100 p-2 rounded mt-1">
+                                <div key={index} className="mt-1 rounded bg-green-100 p-2">
                                   <small>✅ Tool result: {part.type.replace("tool-", "")}</small>
-                                  <div className="text-xs mt-1">
+                                  <div className="mt-1 text-xs">
                                     Result: {JSON.stringify(toolPart.output)}
                                   </div>
                                 </div>
@@ -202,9 +202,9 @@ export function VercelChat({
                             }
                             if (toolPart.state === "output-error") {
                               return (
-                                <div key={index} className="bg-red-100 p-2 rounded mt-1">
+                                <div key={index} className="mt-1 rounded bg-red-100 p-2">
                                   <small>❌ Tool error: {part.type.replace("tool-", "")}</small>
-                                  <div className="text-xs mt-1">Error: {toolPart.errorText}</div>
+                                  <div className="mt-1 text-xs">Error: {toolPart.errorText}</div>
                                 </div>
                               );
                             }
@@ -216,7 +216,7 @@ export function VercelChat({
                 </div>
 
                 {message.role === "user" && showAvatar && (
-                  <Avatar className="h-8 w-8 mt-0.5">
+                  <Avatar className="mt-0.5 h-8 w-8">
                     <AvatarFallback>
                       <User className="h-4 w-4" />
                     </AvatarFallback>
@@ -226,18 +226,18 @@ export function VercelChat({
             ))}
 
             {isLoading && (
-              <div className="flex gap-3 justify-start">
+              <div className="flex justify-start gap-3">
                 {showAvatar && (
-                  <Avatar className="h-8 w-8 mt-0.5">
+                  <Avatar className="mt-0.5 h-8 w-8">
                     <AvatarFallback>
                       <Bot className="h-4 w-4" />
                     </AvatarFallback>
                   </Avatar>
                 )}
-                <div className="bg-muted rounded-lg px-4 py-2">
+                <div className="rounded-lg bg-muted px-4 py-2">
                   <div className="flex items-center gap-2">
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    <span className="text-sm text-muted-foreground">AI is typing...</span>
+                    <span className="text-muted-foreground text-sm">AI is typing...</span>
                   </div>
                 </div>
               </div>
@@ -272,8 +272,8 @@ export function VercelChat({
 
       {error && (
         <div className="px-6 pb-4">
-          <div className="rounded-md bg-destructive/15 border border-destructive/20 px-3 py-2">
-            <p className="text-sm text-destructive">Error: {error.message}</p>
+          <div className="rounded-md border border-destructive/20 bg-destructive/15 px-3 py-2">
+            <p className="text-destructive text-sm">Error: {error.message}</p>
             <Button
               variant="ghost"
               size="sm"
