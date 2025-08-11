@@ -59,7 +59,7 @@
   },
   "dependencies": {
     "@clack/prompts": "^0.8.2",
-    "commander": "^12.1.0",
+    "commander": "^14.0.0",
     "cross-spawn": "^7.0.6",
     "detect-package-manager": "^3.0.2",
     "fs-extra": "^11.2.0",
