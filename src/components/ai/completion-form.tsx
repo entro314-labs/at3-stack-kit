@@ -1,46 +1,46 @@
-"use client";
+'use client'
 
-import { Copy, Loader2, RefreshCw, Wand2 } from "lucide-react";
-import * as React from "react";
+import { Copy, Loader2, RefreshCw, Wand2 } from 'lucide-react'
+import * as React from 'react'
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Label } from '@/components/ui/label'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Slider } from "@/components/ui/slider";
-import { Textarea } from "@/components/ui/textarea";
-import { MODEL_CONFIGS } from "@/lib/ai/config";
-import { type UseAICompletionOptions, useAICompletion } from "@/lib/ai/hooks";
-import { cn } from "@/lib/utils";
+} from '@/components/ui/select'
+import { Slider } from '@/components/ui/slider'
+import { Textarea } from '@/components/ui/textarea'
+import { MODEL_CONFIGS } from '@/lib/ai/config'
+import { type UseAICompletionOptions, useAICompletion } from '@/lib/ai/hooks'
+import { cn } from '@/lib/utils'
 
-interface CompletionFormProps extends Omit<UseAICompletionOptions, "systemMessage"> {
-  className?: string;
-  title?: string;
-  placeholder?: string;
-  showSettings?: boolean;
-  systemMessage?: string;
+interface CompletionFormProps extends Omit<UseAICompletionOptions, 'systemMessage'> {
+  className?: string
+  title?: string
+  placeholder?: string
+  showSettings?: boolean
+  systemMessage?: string
 }
 
 export function CompletionForm({
   className,
-  title = "AI Text Generation",
-  placeholder = "Enter your prompt here...",
+  title = 'AI Text Generation',
+  placeholder = 'Enter your prompt here...',
   showSettings = true,
-  systemMessage = "You are a helpful AI assistant.",
+  systemMessage = 'You are a helpful AI assistant.',
   ...completionOptions
 }: CompletionFormProps) {
-  const [prompt, setPrompt] = React.useState("");
-  const [provider, setProvider] = React.useState(completionOptions.provider || "openai");
-  const [model, setModel] = React.useState(completionOptions.model || "gpt-4-turbo");
-  const [temperature, setTemperature] = React.useState(completionOptions.temperature || 0.7);
-  const [maxTokens, setMaxTokens] = React.useState(completionOptions.maxTokens || 2000);
-  const [copied, setCopied] = React.useState(false);
+  const [prompt, setPrompt] = React.useState('')
+  const [provider, setProvider] = React.useState(completionOptions.provider || 'openai')
+  const [model, setModel] = React.useState(completionOptions.model || 'gpt-4-turbo')
+  const [temperature, setTemperature] = React.useState(completionOptions.temperature || 0.7)
+  const [maxTokens, setMaxTokens] = React.useState(completionOptions.maxTokens || 2000)
+  const [copied, setCopied] = React.useState(false)
 
   const { completion, isLoading, error, generate, reset } = useAICompletion({
     ...completionOptions,
@@ -49,33 +49,37 @@ export function CompletionForm({
     temperature,
     maxTokens,
     systemMessage,
-  });
+  })
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!prompt.trim() || isLoading) { return; }
-    await generate(prompt);
-  };
+    e.preventDefault()
+    if (!prompt.trim() || isLoading) {
+      return
+    }
+    await generate(prompt)
+  }
 
   const handleCopy = async () => {
-    if (!completion) { return; }
+    if (!completion) {
+      return
+    }
 
     try {
-      await navigator.clipboard.writeText(completion);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      await navigator.clipboard.writeText(completion)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
     } catch (err) {
-      console.error("Failed to copy text:", err);
+      console.error('Failed to copy text:', err)
     }
-  };
+  }
 
   const availableModels =
     provider && MODEL_CONFIGS[provider as keyof typeof MODEL_CONFIGS]
       ? Object.keys(MODEL_CONFIGS[provider as keyof typeof MODEL_CONFIGS])
-      : [];
+      : []
 
   return (
-    <Card className={cn("w-full", className)}>
+    <Card className={cn('w-full', className)}>
       <CardHeader>
         <div className="flex items-center gap-2">
           <Wand2 className="h-5 w-5" />
@@ -197,7 +201,7 @@ export function CompletionForm({
               <Label>Generated Content</Label>
               <Button variant="ghost" size="sm" onClick={handleCopy} className="h-8 px-2">
                 <Copy className="mr-1 h-4 w-4" />
-                {copied ? "Copied!" : "Copy"}
+                {copied ? 'Copied!' : 'Copy'}
               </Button>
             </div>
             <div className="rounded-md border bg-muted p-4">
@@ -207,5 +211,5 @@ export function CompletionForm({
         )}
       </CardContent>
     </Card>
-  );
+  )
 }

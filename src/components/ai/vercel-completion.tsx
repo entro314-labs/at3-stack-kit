@@ -1,60 +1,60 @@
-"use client";
+'use client'
 
-import { Copy, Loader2, RefreshCw, Wand2 } from "lucide-react";
-import * as React from "react";
+import { Copy, Loader2, RefreshCw, Wand2 } from 'lucide-react'
+import * as React from 'react'
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Label } from '@/components/ui/label'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import type { AIModelKey } from "@/lib/ai/vercel-client";
-import { useAICompletion } from "@/lib/ai/vercel-hooks";
-import { cn } from "@/lib/utils";
+} from '@/components/ui/select'
+import { Textarea } from '@/components/ui/textarea'
+import type { AIModelKey } from '@/lib/ai/vercel-client'
+import { useAICompletion } from '@/lib/ai/vercel-hooks'
+import { cn } from '@/lib/utils'
 
 interface VercelCompletionProps {
-  className?: string;
-  title?: string;
-  placeholder?: string;
-  showModelSelector?: boolean;
-  systemMessage?: string;
-  initialModel?: AIModelKey;
-  onComplete?: (prompt: string, completion: string) => void;
+  className?: string
+  title?: string
+  placeholder?: string
+  showModelSelector?: boolean
+  systemMessage?: string
+  initialModel?: AIModelKey
+  onComplete?: (prompt: string, completion: string) => void
 }
 
 const AI_MODEL_OPTIONS: { value: AIModelKey; label: string; provider: string }[] = [
   // OpenAI
-  { value: "gpt-4o", label: "GPT-4o", provider: "OpenAI" },
-  { value: "gpt-4o-mini", label: "GPT-4o Mini", provider: "OpenAI" },
-  { value: "gpt-4-turbo", label: "GPT-4 Turbo", provider: "OpenAI" },
+  { value: 'gpt-4o', label: 'GPT-4o', provider: 'OpenAI' },
+  { value: 'gpt-4o-mini', label: 'GPT-4o Mini', provider: 'OpenAI' },
+  { value: 'gpt-4-turbo', label: 'GPT-4 Turbo', provider: 'OpenAI' },
 
   // Anthropic
-  { value: "claude-3-5-sonnet", label: "Claude 3.5 Sonnet", provider: "Anthropic" },
-  { value: "claude-3-sonnet", label: "Claude 3 Sonnet", provider: "Anthropic" },
-  { value: "claude-3-haiku", label: "Claude 3 Haiku", provider: "Anthropic" },
+  { value: 'claude-3-5-sonnet', label: 'Claude 3.5 Sonnet', provider: 'Anthropic' },
+  { value: 'claude-3-sonnet', label: 'Claude 3 Sonnet', provider: 'Anthropic' },
+  { value: 'claude-3-haiku', label: 'Claude 3 Haiku', provider: 'Anthropic' },
 
   // Google
-  { value: "gemini-1.5-pro", label: "Gemini 1.5 Pro", provider: "Google" },
-  { value: "gemini-1.5-flash", label: "Gemini 1.5 Flash", provider: "Google" },
-];
+  { value: 'gemini-1.5-pro', label: 'Gemini 1.5 Pro', provider: 'Google' },
+  { value: 'gemini-1.5-flash', label: 'Gemini 1.5 Flash', provider: 'Google' },
+]
 
 export function VercelCompletion({
   className,
-  title = "AI Text Completion",
-  placeholder = "Enter your prompt here...",
+  title = 'AI Text Completion',
+  placeholder = 'Enter your prompt here...',
   showModelSelector = true,
-  systemMessage = "You are a helpful AI assistant.",
-  initialModel = "gpt-4o-mini",
+  systemMessage = 'You are a helpful AI assistant.',
+  initialModel = 'gpt-4o-mini',
   onComplete,
 }: VercelCompletionProps) {
-  const [selectedModel, setSelectedModel] = React.useState<AIModelKey>(initialModel);
-  const [copied, setCopied] = React.useState(false);
+  const [selectedModel, setSelectedModel] = React.useState<AIModelKey>(initialModel)
+  const [copied, setCopied] = React.useState(false)
 
   const {
     completion,
@@ -70,38 +70,42 @@ export function VercelCompletion({
     model: selectedModel,
     systemMessage,
     onFinish: (prompt, completion) => {
-      onComplete?.(prompt, completion);
+      onComplete?.(prompt, completion)
     },
     onError: (error) => {
-      console.error("Completion error:", error);
+      console.error('Completion error:', error)
     },
-  });
+  })
 
   const handleSubmitWithModel = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim() || isLoading) { return; }
-    handleSubmit(e);
-  };
+    e.preventDefault()
+    if (!input.trim() || isLoading) {
+      return
+    }
+    handleSubmit(e)
+  }
 
   const handleCopy = async () => {
-    if (!completion) { return; }
+    if (!completion) {
+      return
+    }
 
     try {
-      await navigator.clipboard.writeText(completion);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      await navigator.clipboard.writeText(completion)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
     } catch (err) {
-      console.error("Failed to copy text:", err);
+      console.error('Failed to copy text:', err)
     }
-  };
+  }
 
   const handleReset = () => {
-    setInput("");
-    setCompletion("");
-  };
+    setInput('')
+    setCompletion('')
+  }
 
   return (
-    <Card className={cn("w-full", className)}>
+    <Card className={cn('w-full', className)}>
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -185,7 +189,7 @@ export function VercelCompletion({
               <Label>Generated Content</Label>
               <Button variant="ghost" size="sm" onClick={handleCopy} className="h-8 px-2">
                 <Copy className="mr-1 h-4 w-4" />
-                {copied ? "Copied!" : "Copy"}
+                {copied ? 'Copied!' : 'Copy'}
               </Button>
             </div>
             <div className="rounded-md border bg-muted p-4">
@@ -195,5 +199,5 @@ export function VercelCompletion({
         )}
       </CardContent>
     </Card>
-  );
+  )
 }

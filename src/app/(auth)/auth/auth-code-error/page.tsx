@@ -1,7 +1,7 @@
-import { AlertTriangle } from "lucide-react";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { AlertTriangle } from 'lucide-react'
+import Link from 'next/link'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
 export default function AuthCodeError() {
   return (
@@ -34,5 +34,5 @@ export default function AuthCodeError() {
         </CardContent>
       </Card>
     </div>
-  );
+  )
 }

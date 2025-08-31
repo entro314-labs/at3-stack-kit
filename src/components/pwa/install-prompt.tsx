@@ -1,9 +1,9 @@
-"use client";
+'use client'
 
-import { Download, Share, Smartphone, X } from "lucide-react";
-import * as React from "react";
+import { Download, Share, Smartphone, X } from 'lucide-react'
+import * as React from 'react'
 
-import { Button } from "@/components/ui/button";
+import { Button } from '@/components/ui/button'
 import {
   Card,
   CardContent,
@@ -11,45 +11,45 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { getInstallationInstructions, useInstallPrompt } from "@/lib/pwa/install";
-import { cn } from "@/lib/utils";
+} from '@/components/ui/card'
+import { getInstallationInstructions, useInstallPrompt } from '@/lib/pwa/install'
+import { cn } from '@/lib/utils'
 
 interface InstallPromptProps {
-  className?: string;
+  className?: string
 }
 
 export function InstallPrompt({ className }: InstallPromptProps) {
-  const { isInstallable, isInstalled, isIOS, install, dismiss } = useInstallPrompt();
-  const [isInstalling, setIsInstalling] = React.useState(false);
-  const [showInstructions, setShowInstructions] = React.useState(false);
+  const { isInstallable, isInstalled, isIOS, install, dismiss } = useInstallPrompt()
+  const [isInstalling, setIsInstalling] = React.useState(false)
+  const [showInstructions, setShowInstructions] = React.useState(false)
 
   // Don't show if already installed or not installable
-  if (isInstalled || (!(isInstallable || isIOS))) {
-    return null;
+  if (isInstalled || !(isInstallable || isIOS)) {
+    return null
   }
 
   const handleInstall = async () => {
     if (isIOS) {
-      setShowInstructions(true);
-      return;
+      setShowInstructions(true)
+      return
     }
 
-    setIsInstalling(true);
+    setIsInstalling(true)
     try {
-      await install();
+      await install()
     } catch (error) {
-      console.error("Installation failed:", error);
+      console.error('Installation failed:', error)
     } finally {
-      setIsInstalling(false);
+      setIsInstalling(false)
     }
-  };
+  }
 
-  const instructions = getInstallationInstructions(isIOS);
+  const instructions = getInstallationInstructions(isIOS)
 
   if (showInstructions) {
     return (
-      <Card className={cn("mx-auto w-full max-w-md", className)}>
+      <Card className={cn('mx-auto w-full max-w-md', className)}>
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -96,11 +96,11 @@ export function InstallPrompt({ className }: InstallPromptProps) {
           </Button>
         </CardFooter>
       </Card>
-    );
+    )
   }
 
   return (
-    <Card className={cn("mx-auto w-full max-w-md", className)}>
+    <Card className={cn('mx-auto w-full max-w-md', className)}>
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -136,9 +136,9 @@ export function InstallPrompt({ className }: InstallPromptProps) {
           Not now
         </Button>
         <Button onClick={handleInstall} disabled={isInstalling} className="flex-1">
-          {isInstalling ? "Installing..." : "Install"}
+          {isInstalling ? 'Installing...' : 'Install'}
         </Button>
       </CardFooter>
     </Card>
-  );
+  )
 }

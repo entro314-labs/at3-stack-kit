@@ -1,8 +1,8 @@
-"use client";
+'use client'
 
-import { Loader2 } from "lucide-react";
-import { Suspense } from "react";
-import { PasswordResetForm } from "@/components/auth/password-reset-form";
+import { Loader2 } from 'lucide-react'
+import { Suspense } from 'react'
+import { PasswordResetForm } from '@/components/auth/password-reset-form'
 
 export default function ResetPasswordPage() {
   return (
@@ -17,5 +17,5 @@ export default function ResetPasswordPage() {
         <PasswordResetForm onBack={() => window.history.back()} />
       </Suspense>
     </div>
-  );
+  )
 }

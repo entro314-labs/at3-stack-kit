@@ -1,27 +1,27 @@
-"use client";
+'use client'
 
-import { useChat } from "@ai-sdk/react";
-import { DefaultChatTransport } from "ai";
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { useChat } from '@ai-sdk/react'
+import { DefaultChatTransport } from 'ai'
+import { useState } from 'react'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
 
 export function SimpleChat() {
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState('')
   const { messages, sendMessage, status } = useChat({
     transport: new DefaultChatTransport({
-      api: "/api/chat",
+      api: '/api/chat',
     }),
-  });
+  })
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (input.trim() && status === "ready") {
-      sendMessage({ text: input });
-      setInput("");
+    e.preventDefault()
+    if (input.trim() && status === 'ready') {
+      sendMessage({ text: input })
+      setInput('')
     }
-  };
+  }
 
   return (
     <Card className="mx-auto w-full max-w-md">
@@ -32,22 +32,22 @@ export function SimpleChat() {
         {messages.map((message) => (
           <div
             key={message.id}
-            className={`rounded p-3 ${message.role === "user" ? "bg-blue-100" : "bg-gray-100"}`}
+            className={`rounded p-3 ${message.role === 'user' ? 'bg-blue-100' : 'bg-gray-100'}`}
           >
             <strong>{message.role}:</strong>
             <div>
               {message.parts.map((part, index) => {
                 switch (part.type) {
-                  case "text":
-                    return <span key={index}>{part.text}</span>;
+                  case 'text':
+                    return <span key={index}>{part.text}</span>
                   default:
-                    return <span key={index}>{JSON.stringify(part)}</span>;
+                    return <span key={index}>{JSON.stringify(part)}</span>
                 }
               })}
             </div>
           </div>
         ))}
-        {status === "streaming" && <div>AI is typing...</div>}
+        {status === 'streaming' && <div>AI is typing...</div>}
       </CardContent>
       <CardFooter>
         <form onSubmit={handleSubmit} className="flex w-full gap-2">
@@ -55,13 +55,13 @@ export function SimpleChat() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Type your message..."
-            disabled={status !== "ready"}
+            disabled={status !== 'ready'}
           />
-          <Button type="submit" disabled={status !== "ready" || !input.trim()}>
+          <Button type="submit" disabled={status !== 'ready' || !input.trim()}>
             Send
           </Button>
         </form>
       </CardFooter>
     </Card>
-  );
+  )
 }

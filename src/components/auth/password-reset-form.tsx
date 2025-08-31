@@ -1,12 +1,12 @@
-"use client";
+'use client'
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft, Loader2, Mail } from "lucide-react";
-import * as React from "react";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
+import { zodResolver } from '@hookform/resolvers/zod'
+import { ArrowLeft, Loader2, Mail } from 'lucide-react'
+import * as React from 'react'
+import { useForm } from 'react-hook-form'
+import { z } from 'zod'
 
-import { Button } from "@/components/ui/button";
+import { Button } from '@/components/ui/button'
 import {
   Card,
   CardContent,
@@ -14,59 +14,59 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { resetPassword } from "@/lib/auth/auth-helpers";
-import { cn } from "@/lib/utils";
+} from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { resetPassword } from '@/lib/auth/auth-helpers'
+import { cn } from '@/lib/utils'
 
 const resetPasswordSchema = z.object({
-  email: z.string().email("Please enter a valid email address"),
-});
+  email: z.string().email('Please enter a valid email address'),
+})
 
-type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>;
+type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>
 
 interface PasswordResetFormProps {
-  className?: string;
-  onBack?: () => void;
+  className?: string
+  onBack?: () => void
 }
 
 export function PasswordResetForm({ className, onBack }: PasswordResetFormProps) {
-  const [isLoading, setIsLoading] = React.useState(false);
-  const [error, setError] = React.useState<string | null>(null);
-  const [success, setSuccess] = React.useState(false);
+  const [isLoading, setIsLoading] = React.useState(false)
+  const [error, setError] = React.useState<string | null>(null)
+  const [success, setSuccess] = React.useState(false)
 
   const form = useForm<ResetPasswordFormData>({
     resolver: zodResolver(resetPasswordSchema),
     defaultValues: {
-      email: "",
+      email: '',
     },
-  });
+  })
 
   const onSubmit = async (data: ResetPasswordFormData) => {
-    setIsLoading(true);
-    setError(null);
-    setSuccess(false);
+    setIsLoading(true)
+    setError(null)
+    setSuccess(false)
 
     try {
-      const { error } = await resetPassword(data.email);
+      const { error } = await resetPassword(data.email)
 
       if (error) {
-        setError(error.message);
-        return;
+        setError(error.message)
+        return
       }
 
-      setSuccess(true);
+      setSuccess(true)
     } catch (_err) {
-      setError("An unexpected error occurred. Please try again.");
+      setError('An unexpected error occurred. Please try again.')
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   if (success) {
     return (
-      <Card className={cn("w-full max-w-md", className)}>
+      <Card className={cn('w-full max-w-md', className)}>
         <CardHeader className="space-y-1 text-center">
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-100 dark:bg-green-900">
             <Mail className="h-6 w-6 text-green-600 dark:text-green-400" />
@@ -89,8 +89,8 @@ export function PasswordResetForm({ className, onBack }: PasswordResetFormProps)
             variant="outline"
             className="w-full"
             onClick={() => {
-              setSuccess(false);
-              form.reset();
+              setSuccess(false)
+              form.reset()
             }}
           >
             Send Another Email
@@ -103,11 +103,11 @@ export function PasswordResetForm({ className, onBack }: PasswordResetFormProps)
           )}
         </CardFooter>
       </Card>
-    );
+    )
   }
 
   return (
-    <Card className={cn("w-full max-w-md", className)}>
+    <Card className={cn('w-full max-w-md', className)}>
       <CardHeader className="space-y-1">
         <CardTitle className="font-bold text-2xl">Reset Password</CardTitle>
         <CardDescription>
@@ -128,7 +128,7 @@ export function PasswordResetForm({ className, onBack }: PasswordResetFormProps)
               id="email"
               type="email"
               placeholder="name@example.com"
-              {...form.register("email")}
+              {...form.register('email')}
               disabled={isLoading}
             />
             {form.formState.errors.email && (
@@ -151,5 +151,5 @@ export function PasswordResetForm({ className, onBack }: PasswordResetFormProps)
         )}
       </CardFooter>
     </Card>
-  );
+  )
 }

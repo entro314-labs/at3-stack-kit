@@ -1,13 +1,13 @@
-"use client";
+'use client'
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Eye, EyeOff, Github, Loader2 } from "lucide-react";
-import { useRouter } from "next/navigation";
-import * as React from "react";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
+import { zodResolver } from '@hookform/resolvers/zod'
+import { Eye, EyeOff, Github, Loader2 } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import * as React from 'react'
+import { useForm } from 'react-hook-form'
+import { z } from 'zod'
 
-import { Button } from "@/components/ui/button";
+import { Button } from '@/components/ui/button'
 import {
   Card,
   CardContent,
@@ -15,88 +15,88 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { signInWithProvider, signUpWithEmail } from "@/lib/auth/auth-helpers";
-import { cn } from "@/lib/utils";
+} from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { signInWithProvider, signUpWithEmail } from '@/lib/auth/auth-helpers'
+import { cn } from '@/lib/utils'
 
 const signUpSchema = z
   .object({
-    email: z.string().email("Please enter a valid email address"),
-    password: z.string().min(6, "Password must be at least 6 characters"),
-    confirmPassword: z.string().min(6, "Password must be at least 6 characters"),
+    email: z.string().email('Please enter a valid email address'),
+    password: z.string().min(6, 'Password must be at least 6 characters'),
+    confirmPassword: z.string().min(6, 'Password must be at least 6 characters'),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords don't match",
-    path: ["confirmPassword"],
-  });
+    path: ['confirmPassword'],
+  })
 
-type SignUpFormData = z.infer<typeof signUpSchema>;
+type SignUpFormData = z.infer<typeof signUpSchema>
 
 interface SignUpFormProps {
-  className?: string;
-  redirectTo?: string;
+  className?: string
+  redirectTo?: string
 }
 
-export function SignUpForm({ className, redirectTo = "/" }: SignUpFormProps) {
-  const _router = useRouter();
-  const [showPassword, setShowPassword] = React.useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
-  const [isLoading, setIsLoading] = React.useState(false);
-  const [error, setError] = React.useState<string | null>(null);
-  const [success, setSuccess] = React.useState(false);
+export function SignUpForm({ className, redirectTo = '/' }: SignUpFormProps) {
+  const _router = useRouter()
+  const [showPassword, setShowPassword] = React.useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = React.useState(false)
+  const [isLoading, setIsLoading] = React.useState(false)
+  const [error, setError] = React.useState<string | null>(null)
+  const [success, setSuccess] = React.useState(false)
 
   const form = useForm<SignUpFormData>({
     resolver: zodResolver(signUpSchema),
     defaultValues: {
-      email: "",
-      password: "",
-      confirmPassword: "",
+      email: '',
+      password: '',
+      confirmPassword: '',
     },
-  });
+  })
 
   const onSubmit = async (data: SignUpFormData) => {
-    setIsLoading(true);
-    setError(null);
-    setSuccess(false);
+    setIsLoading(true)
+    setError(null)
+    setSuccess(false)
 
     try {
-      const { error } = await signUpWithEmail(data.email, data.password);
+      const { error } = await signUpWithEmail(data.email, data.password)
 
       if (error) {
-        setError(error.message);
-        return;
+        setError(error.message)
+        return
       }
 
-      setSuccess(true);
+      setSuccess(true)
     } catch (_err) {
-      setError("An unexpected error occurred. Please try again.");
+      setError('An unexpected error occurred. Please try again.')
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
-  const handleProviderSignIn = async (provider: "github" | "google") => {
-    setIsLoading(true);
-    setError(null);
+  const handleProviderSignIn = async (provider: 'github' | 'google') => {
+    setIsLoading(true)
+    setError(null)
 
     try {
-      const { error } = await signInWithProvider(provider);
+      const { error } = await signInWithProvider(provider)
 
       if (error) {
-        setError(error.message);
+        setError(error.message)
       }
     } catch (_err) {
-      setError("An unexpected error occurred. Please try again.");
+      setError('An unexpected error occurred. Please try again.')
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   if (success) {
     return (
-      <Card className={cn("w-full max-w-md", className)}>
+      <Card className={cn('w-full max-w-md', className)}>
         <CardHeader className="space-y-1">
           <CardTitle className="font-bold text-2xl">Check Your Email</CardTitle>
           <CardDescription>
@@ -112,18 +112,18 @@ export function SignUpForm({ className, redirectTo = "/" }: SignUpFormProps) {
         </CardContent>
         <CardFooter>
           <p className="w-full text-center text-muted-foreground text-sm">
-            Already have an account?{" "}
+            Already have an account?{' '}
             <a href="/auth/sign-in" className="underline underline-offset-4 hover:text-primary">
               Sign in
             </a>
           </p>
         </CardFooter>
       </Card>
-    );
+    )
   }
 
   return (
-    <Card className={cn("w-full max-w-md", className)}>
+    <Card className={cn('w-full max-w-md', className)}>
       <CardHeader className="space-y-1">
         <CardTitle className="font-bold text-2xl">Create Account</CardTitle>
         <CardDescription>Enter your details below to create your account</CardDescription>
@@ -142,7 +142,7 @@ export function SignUpForm({ className, redirectTo = "/" }: SignUpFormProps) {
               id="email"
               type="email"
               placeholder="name@example.com"
-              {...form.register("email")}
+              {...form.register('email')}
               disabled={isLoading}
             />
             {form.formState.errors.email && (
@@ -155,9 +155,9 @@ export function SignUpForm({ className, redirectTo = "/" }: SignUpFormProps) {
             <div className="relative">
               <Input
                 id="password"
-                type={showPassword ? "text" : "password"}
+                type={showPassword ? 'text' : 'password'}
                 placeholder="Create a password"
-                {...form.register("password")}
+                {...form.register('password')}
                 disabled={isLoading}
               />
               <Button
@@ -181,9 +181,9 @@ export function SignUpForm({ className, redirectTo = "/" }: SignUpFormProps) {
             <div className="relative">
               <Input
                 id="confirmPassword"
-                type={showConfirmPassword ? "text" : "password"}
+                type={showConfirmPassword ? 'text' : 'password'}
                 placeholder="Confirm your password"
-                {...form.register("confirmPassword")}
+                {...form.register('confirmPassword')}
                 disabled={isLoading}
               />
               <Button
@@ -222,7 +222,7 @@ export function SignUpForm({ className, redirectTo = "/" }: SignUpFormProps) {
         <div className="grid grid-cols-2 gap-4">
           <Button
             variant="outline"
-            onClick={() => handleProviderSignIn("github")}
+            onClick={() => handleProviderSignIn('github')}
             disabled={isLoading}
           >
             <Github className="mr-2 h-4 w-4" />
@@ -230,7 +230,7 @@ export function SignUpForm({ className, redirectTo = "/" }: SignUpFormProps) {
           </Button>
           <Button
             variant="outline"
-            onClick={() => handleProviderSignIn("google")}
+            onClick={() => handleProviderSignIn('google')}
             disabled={isLoading}
           >
             <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
@@ -257,12 +257,12 @@ export function SignUpForm({ className, redirectTo = "/" }: SignUpFormProps) {
       </CardContent>
       <CardFooter>
         <p className="w-full text-center text-muted-foreground text-sm">
-          Already have an account?{" "}
+          Already have an account?{' '}
           <a href="/auth/sign-in" className="underline underline-offset-4 hover:text-primary">
             Sign in
           </a>
         </p>
       </CardFooter>
     </Card>
-  );
+  )
 }

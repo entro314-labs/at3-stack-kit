@@ -1,6 +1,6 @@
-import { Loader2 } from "lucide-react";
-import { Suspense } from "react";
-import { SignUpForm } from "@/components/auth/sign-up-form";
+import { Loader2 } from 'lucide-react'
+import { Suspense } from 'react'
+import { SignUpForm } from '@/components/auth/sign-up-form'
 
 export default function SignUpPage() {
   return (
@@ -15,5 +15,5 @@ export default function SignUpPage() {
         <SignUpForm />
       </Suspense>
     </div>
-  );
+  )
 }

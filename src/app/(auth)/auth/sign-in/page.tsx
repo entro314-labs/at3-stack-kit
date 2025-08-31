@@ -1,6 +1,6 @@
-import { Loader2 } from "lucide-react";
-import { Suspense } from "react";
-import { SignInForm } from "@/components/auth/sign-in-form";
+import { Loader2 } from 'lucide-react'
+import { Suspense } from 'react'
+import { SignInForm } from '@/components/auth/sign-in-form'
 
 export default function SignInPage() {
   return (
@@ -15,5 +15,5 @@ export default function SignInPage() {
         <SignInForm />
       </Suspense>
     </div>
-  );
+  )
 }

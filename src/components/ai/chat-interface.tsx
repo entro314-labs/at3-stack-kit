@@ -1,59 +1,61 @@
-"use client";
+'use client'
 
-import { Bot, Loader2, RefreshCw, Send, User } from "lucide-react";
-import * as React from "react";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { type UseChatOptions, useChat } from "@/lib/ai/hooks";
-import { cn } from "@/lib/utils";
+import { Bot, Loader2, RefreshCw, Send, User } from 'lucide-react'
+import * as React from 'react'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { type UseChatOptions, useChat } from '@/lib/ai/hooks'
+import { cn } from '@/lib/utils'
 
 interface ChatInterfaceProps extends UseChatOptions {
-  className?: string;
-  placeholder?: string;
-  height?: string;
-  showAvatar?: boolean;
+  className?: string
+  placeholder?: string
+  height?: string
+  showAvatar?: boolean
 }
 
 export function ChatInterface({
   className,
-  placeholder = "Type your message...",
-  height = "h-96",
+  placeholder = 'Type your message...',
+  height = 'h-96',
   showAvatar = true,
   ...chatOptions
 }: ChatInterfaceProps) {
-  const [input, setInput] = React.useState("");
-  const { messages, isLoading, error, sendMessage, clearMessages, abort } = useChat(chatOptions);
-  const scrollAreaRef = React.useRef<HTMLDivElement>(null);
+  const [input, setInput] = React.useState('')
+  const { messages, isLoading, error, sendMessage, clearMessages, abort } = useChat(chatOptions)
+  const scrollAreaRef = React.useRef<HTMLDivElement>(null)
 
   // Auto-scroll to bottom when new messages arrive
   React.useEffect(() => {
-    const scrollElement = scrollAreaRef.current?.querySelector("[data-radix-scroll-area-viewport]");
+    const scrollElement = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]')
     if (scrollElement) {
-      scrollElement.scrollTop = scrollElement.scrollHeight;
+      scrollElement.scrollTop = scrollElement.scrollHeight
     }
-  }, []);
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim() || isLoading) { return; }
+    e.preventDefault()
+    if (!input.trim() || isLoading) {
+      return
+    }
 
-    const message = input.trim();
-    setInput("");
-    await sendMessage(message);
-  };
+    const message = input.trim()
+    setInput('')
+    await sendMessage(message)
+  }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSubmit(e);
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      handleSubmit(e)
     }
-  };
+  }
 
   return (
-    <Card className={cn("flex flex-col", className)}>
+    <Card className={cn('flex flex-col', className)}>
       <CardHeader className="shrink-0 pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -67,7 +69,7 @@ export function ChatInterface({
       </CardHeader>
 
       <CardContent className="flex-1 p-0">
-        <ScrollArea ref={scrollAreaRef} className={cn("px-6", height)}>
+        <ScrollArea ref={scrollAreaRef} className={cn('px-6', height)}>
           <div className="space-y-4 pb-4">
             {messages.length === 0 && (
               <div className="flex h-32 items-center justify-center text-muted-foreground">
@@ -79,11 +81,11 @@ export function ChatInterface({
               <div
                 key={message.id}
                 className={cn(
-                  "flex gap-3",
-                  message.role === "user" ? "justify-end" : "justify-start"
+                  'flex gap-3',
+                  message.role === 'user' ? 'justify-end' : 'justify-start'
                 )}
               >
-                {message.role === "assistant" && showAvatar && (
+                {message.role === 'assistant' && showAvatar && (
                   <Avatar className="mt-0.5 h-8 w-8">
                     <AvatarFallback>
                       <Bot className="h-4 w-4" />
@@ -93,22 +95,22 @@ export function ChatInterface({
 
                 <div
                   className={cn(
-                    "max-w-[80%] rounded-lg px-4 py-2",
-                    message.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted"
+                    'max-w-[80%] rounded-lg px-4 py-2',
+                    message.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted'
                   )}
                 >
                   <p className="whitespace-pre-wrap text-sm">{message.content}</p>
                   <div className="mt-1">
                     <time className="text-xs opacity-70">
                       {message.timestamp.toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
+                        hour: '2-digit',
+                        minute: '2-digit',
                       })}
                     </time>
                   </div>
                 </div>
 
-                {message.role === "user" && showAvatar && (
+                {message.role === 'user' && showAvatar && (
                   <Avatar className="mt-0.5 h-8 w-8">
                     <AvatarFallback>
                       <User className="h-4 w-4" />
@@ -172,5 +174,5 @@ export function ChatInterface({
         </div>
       )}
     </Card>
-  );
+  )
 }
