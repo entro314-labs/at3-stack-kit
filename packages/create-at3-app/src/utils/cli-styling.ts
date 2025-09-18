@@ -3,7 +3,7 @@
  * Aligned with at3-toolkit's sophisticated styling system
  */
 
-import chalk from "chalk";
+import chalk from 'chalk'
 
 // Color palette - simplified for create-at3-app
 export const colors = {
@@ -15,7 +15,7 @@ export const colors = {
   info: chalk.blue,
   muted: chalk.gray,
   accent: chalk.magenta,
-} as const;
+} as const
 
 // Text styling utilities
 export const style = {
@@ -33,7 +33,7 @@ export const style = {
   code: (text: string) => chalk.cyan.italic(text),
   path: (text: string) => chalk.dim.underline(text),
   command: (text: string) => chalk.bgBlack.white.bold(` ${text} `),
-} as const;
+} as const
 
 // Template feature styling
 export const featureStyle = {
@@ -42,20 +42,20 @@ export const featureStyle = {
   tailwind: chalk.cyan,
   trpc: chalk.magenta,
   supabase: chalk.green,
-  ai: chalk.hex("#10b981"),
+  ai: chalk.hex('#10b981'),
   edge: chalk.yellow,
   pwa: chalk.magenta,
   i18n: chalk.blue,
   testing: chalk.red,
   streaming: chalk.cyan,
-} as const;
+} as const
 
 // Format template features for display
 export const formatFeatures = (features: string[]) => {
   return features
     .map((feature) => {
-      const colorFn = featureStyle[feature as keyof typeof featureStyle] || colors.muted;
-      return colorFn(`#${feature}`);
+      const colorFn = featureStyle[feature as keyof typeof featureStyle] || colors.muted
+      return colorFn(`#${feature}`)
     })
-    .join(" ");
-};
+    .join(' ')
+}

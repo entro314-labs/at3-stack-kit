@@ -65,6 +65,8 @@
     "format:check": "biome check .",
     "lint": "biome check .",
     "lint:fix": "biome check --fix .",
+    "check": "biome check src/",
+    "check:fix": "biome check --write src/",
     "prepublishOnly": "pnpm build",
     "release": "changeset publish",
     "release:dry-run": "echo 'Dry run release complete'",
@@ -107,10 +109,9 @@
     "typescript": ">=5.0.0"
   },
   "engines": {
-    "node": ">=22.18.0",
-    "pnpm": ">=10.15.0"
+    "node": ">=22.19.0"
   },
-  "preferGlobal": false,
+  "preferGlobal": true,
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org"

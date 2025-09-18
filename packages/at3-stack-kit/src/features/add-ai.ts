@@ -2,33 +2,33 @@
  * Add AI integration to existing project
  */
 
-import { join } from "node:path";
-import { ensureDir, pathExists, readFile, writeFile } from "fs-extra";
+import { join } from 'node:path'
+import { ensureDir, pathExists, readFile, writeFile } from 'fs-extra'
 
-export async function addAI(type: "custom" | "vercel", projectPath: string): Promise<void> {
-  const srcPath = join(projectPath, "src");
-  await ensureDir(srcPath);
+export async function addAI(type: 'custom' | 'vercel', projectPath: string): Promise<void> {
+  const srcPath = join(projectPath, 'src')
+  await ensureDir(srcPath)
 
   // Create lib/ai directory
-  const aiPath = join(srcPath, "lib", "ai");
-  await ensureDir(aiPath);
+  const aiPath = join(srcPath, 'lib', 'ai')
+  await ensureDir(aiPath)
 
-  if (type === "custom") {
-    await addCustomAI(aiPath);
+  if (type === 'custom') {
+    await addCustomAI(aiPath)
   }
 
-  if (type === "vercel") {
-    await addVercelAI(aiPath);
+  if (type === 'vercel') {
+    await addVercelAI(aiPath)
   }
 
   // Create API routes
-  const apiPath = join(srcPath, "app", "api");
-  await ensureDir(apiPath);
+  const apiPath = join(srcPath, 'app', 'api')
+  await ensureDir(apiPath)
 
-  await addAPIRoutes(apiPath, type);
+  await addAPIRoutes(apiPath, type)
 
   // Update package.json
-  await updatePackageJson(projectPath, type);
+  await updatePackageJson(projectPath, type)
 }
 
 async function addCustomAI(aiPath: string): Promise<void> {
@@ -62,9 +62,9 @@ export const AI_PROVIDERS = {
 } as const;
 
 export type AIProviderKey = keyof typeof AI_PROVIDERS;
-`;
+`
 
-  await writeFile(join(aiPath, "config.ts"), clientConfig);
+  await writeFile(join(aiPath, 'config.ts'), clientConfig)
 
   // AI client
   const client = `/**
@@ -117,9 +117,9 @@ export class AIClient {
     return data.choices[0]?.message?.content || '';
   }
 }
-`;
+`
 
-  await writeFile(join(aiPath, "client.ts"), client);
+  await writeFile(join(aiPath, 'client.ts'), client)
 }
 
 async function addVercelAI(aiPath: string): Promise<void> {
@@ -178,9 +178,9 @@ export async function streamCompletion(
 
   return textStream;
 }
-`;
+`
 
-  await writeFile(join(aiPath, "vercel-client.ts"), vercelClient);
+  await writeFile(join(aiPath, 'vercel-client.ts'), vercelClient)
 
   // Vercel AI hooks
   const hooks = `/**
@@ -209,13 +209,13 @@ export function useAICompletion(model: AIModelKey = 'gpt-3.5-turbo') {
     },
   });
 }
-`;
+`
 
-  await writeFile(join(aiPath, "vercel-hooks.ts"), hooks);
+  await writeFile(join(aiPath, 'vercel-hooks.ts'), hooks)
 }
 
-async function addAPIRoutes(apiPath: string, type: "custom" | "vercel"): Promise<void> {
-  if (type === "vercel") {
+async function addAPIRoutes(apiPath: string, type: 'custom' | 'vercel'): Promise<void> {
+  if (type === 'vercel') {
     // Chat API route
     const chatRoute = `import { AI_MODELS, type AIModelKey } from '@/lib/ai/vercel-client';
 import { streamText } from 'ai';
@@ -230,10 +230,10 @@ export async function POST(req: Request) {
 
   return result.toDataStreamResponse();
 }
-`;
+`
 
-    await ensureDir(join(apiPath, "chat"));
-    await writeFile(join(apiPath, "chat", "route.ts"), chatRoute);
+    await ensureDir(join(apiPath, 'chat'))
+    await writeFile(join(apiPath, 'chat', 'route.ts'), chatRoute)
 
     // Completion API route
     const completionRoute = `import { AI_MODELS, type AIModelKey } from '@/lib/ai/vercel-client';
@@ -249,28 +249,28 @@ export async function POST(req: Request) {
 
   return Response.json({ text });
 }
-`;
+`
 
-    await ensureDir(join(apiPath, "completion"));
-    await writeFile(join(apiPath, "completion", "route.ts"), completionRoute);
+    await ensureDir(join(apiPath, 'completion'))
+    await writeFile(join(apiPath, 'completion', 'route.ts'), completionRoute)
   }
 }
 
-async function updatePackageJson(projectPath: string, type: "custom" | "vercel"): Promise<void> {
-  const packageJsonPath = join(projectPath, "package.json");
+async function updatePackageJson(projectPath: string, type: 'custom' | 'vercel'): Promise<void> {
+  const packageJsonPath = join(projectPath, 'package.json')
 
-  if (!(await pathExists(packageJsonPath))) return;
+  if (!(await pathExists(packageJsonPath))) return
 
-  const packageJson = JSON.parse(await readFile(packageJsonPath, "utf-8"));
+  const packageJson = JSON.parse(await readFile(packageJsonPath, 'utf-8'))
 
-  if (!packageJson.dependencies) packageJson.dependencies = {};
+  if (!packageJson.dependencies) packageJson.dependencies = {}
 
-  if (type === "vercel") {
-    packageJson.dependencies.ai = "^5.0.8";
-    packageJson.dependencies["@ai-sdk/openai"] = "^2.0.7";
-    packageJson.dependencies["@ai-sdk/anthropic"] = "^2.0.1";
-    packageJson.dependencies["@ai-sdk/google"] = "^2.0.3";
+  if (type === 'vercel') {
+    packageJson.dependencies.ai = '^5.0.8'
+    packageJson.dependencies['@ai-sdk/openai'] = '^2.0.7'
+    packageJson.dependencies['@ai-sdk/anthropic'] = '^2.0.1'
+    packageJson.dependencies['@ai-sdk/google'] = '^2.0.3'
   }
 
-  await writeFile(packageJsonPath, JSON.stringify(packageJson, null, 2));
+  await writeFile(packageJsonPath, JSON.stringify(packageJson, null, 2))
 }

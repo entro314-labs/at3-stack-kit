@@ -2,31 +2,31 @@
  * Add Supabase integration to existing project
  */
 
-import { ensureDir, pathExists, readFile, writeFile } from "fs-extra";
-import { join } from "path";
+import { ensureDir, pathExists, readFile, writeFile } from 'fs-extra'
+import { join } from 'path'
 
 export async function addSupabase(projectPath: string): Promise<void> {
-  const srcPath = join(projectPath, "src");
-  await ensureDir(srcPath);
+  const srcPath = join(projectPath, 'src')
+  await ensureDir(srcPath)
 
   // Create lib/supabase directory
-  const supabasePath = join(srcPath, "lib", "supabase");
-  await ensureDir(supabasePath);
+  const supabasePath = join(srcPath, 'lib', 'supabase')
+  await ensureDir(supabasePath)
 
   // Add Supabase clients
-  await addSupabaseClients(supabasePath);
+  await addSupabaseClients(supabasePath)
 
   // Add auth helpers
-  await addAuthHelpers(join(srcPath, "lib", "auth"));
+  await addAuthHelpers(join(srcPath, 'lib', 'auth'))
 
   // Update package.json
-  await updatePackageJson(projectPath);
+  await updatePackageJson(projectPath)
 
   // Add environment variables template
-  await addEnvExample(projectPath);
+  await addEnvExample(projectPath)
 
   // Initialize Supabase config
-  await initSupabaseConfig(projectPath);
+  await initSupabaseConfig(projectPath)
 }
 
 async function addSupabaseClients(supabasePath: string): Promise<void> {
@@ -39,9 +39,9 @@ export function createClient() {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 }
-`;
+`
 
-  await writeFile(join(supabasePath, "client.ts"), clientCode);
+  await writeFile(join(supabasePath, 'client.ts'), clientCode)
 
   // Server-side Supabase client
   const serverCode = `import { createServerClient } from '@supabase/ssr';
@@ -73,9 +73,9 @@ export async function createServerClient() {
     }
   );
 }
-`;
+`
 
-  await writeFile(join(supabasePath, "server.ts"), serverCode);
+  await writeFile(join(supabasePath, 'server.ts'), serverCode)
 
   // Middleware helper
   const middlewareCode = `import { createServerClient } from '@supabase/ssr';
@@ -112,13 +112,13 @@ export async function updateSession(request: NextRequest) {
 
   return supabaseResponse;
 }
-`;
+`
 
-  await writeFile(join(supabasePath, "middleware.ts"), middlewareCode);
+  await writeFile(join(supabasePath, 'middleware.ts'), middlewareCode)
 }
 
 async function addAuthHelpers(authPath: string): Promise<void> {
-  await ensureDir(authPath);
+  await ensureDir(authPath)
 
   const authHelpersCode = `import { createServerClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
@@ -145,61 +145,61 @@ export async function signOut() {
   await supabase.auth.signOut();
   redirect('/');
 }
-`;
+`
 
-  await writeFile(join(authPath, "auth-helpers.ts"), authHelpersCode);
+  await writeFile(join(authPath, 'auth-helpers.ts'), authHelpersCode)
 }
 
 async function updatePackageJson(projectPath: string): Promise<void> {
-  const packageJsonPath = join(projectPath, "package.json");
+  const packageJsonPath = join(projectPath, 'package.json')
 
-  if (!(await pathExists(packageJsonPath))) return;
+  if (!(await pathExists(packageJsonPath))) return
 
-  const packageJson = JSON.parse(await readFile(packageJsonPath, "utf-8"));
+  const packageJson = JSON.parse(await readFile(packageJsonPath, 'utf-8'))
 
-  if (!packageJson.dependencies) packageJson.dependencies = {};
-  if (!packageJson.devDependencies) packageJson.devDependencies = {};
+  if (!packageJson.dependencies) packageJson.dependencies = {}
+  if (!packageJson.devDependencies) packageJson.devDependencies = {}
 
   // Add Supabase dependencies
-  packageJson.dependencies["@supabase/supabase-js"] = "^2.54.0";
-  packageJson.dependencies["@supabase/ssr"] = "^0.7.0-rc.2";
+  packageJson.dependencies['@supabase/supabase-js'] = '^2.54.0'
+  packageJson.dependencies['@supabase/ssr'] = '^0.7.0-rc.2'
 
   // Add Supabase CLI as dev dependency
-  packageJson.devDependencies["supabase"] = "^2.33.9";
+  packageJson.devDependencies['supabase'] = '^2.33.9'
 
-  await writeFile(packageJsonPath, JSON.stringify(packageJson, null, 2));
+  await writeFile(packageJsonPath, JSON.stringify(packageJson, null, 2))
 }
 
 async function addEnvExample(projectPath: string): Promise<void> {
-  const envExamplePath = join(projectPath, ".env.example");
+  const envExamplePath = join(projectPath, '.env.example')
 
-  let envContent = "";
+  let envContent = ''
 
   // Read existing .env.example if it exists
   if (await pathExists(envExamplePath)) {
-    envContent = await readFile(envExamplePath, "utf-8");
+    envContent = await readFile(envExamplePath, 'utf-8')
   }
 
   // Add Supabase variables if not present
-  if (!envContent.includes("NEXT_PUBLIC_SUPABASE_URL")) {
+  if (!envContent.includes('NEXT_PUBLIC_SUPABASE_URL')) {
     const supabaseVars = `
 # Supabase
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
-`;
+`
 
-    envContent = envContent + supabaseVars;
-    await writeFile(envExamplePath, envContent);
+    envContent = envContent + supabaseVars
+    await writeFile(envExamplePath, envContent)
   }
 }
 
 async function initSupabaseConfig(projectPath: string): Promise<void> {
-  const supabaseConfigPath = join(projectPath, "supabase", "config.toml");
+  const supabaseConfigPath = join(projectPath, 'supabase', 'config.toml')
 
-  if (await pathExists(supabaseConfigPath)) return; // Already exists
+  if (await pathExists(supabaseConfigPath)) return // Already exists
 
-  await ensureDir(join(projectPath, "supabase"));
+  await ensureDir(join(projectPath, 'supabase'))
 
   const config = `# A string used to distinguish different Supabase projects on the same host.
 project_id = "your-project-id"
@@ -224,7 +224,7 @@ security_update_password_require_reauthentication = true
 enable_signup = true
 double_confirm_changes = true
 enable_confirmations = false
-`;
+`
 
-  await writeFile(supabaseConfigPath, config);
+  await writeFile(supabaseConfigPath, config)
 }

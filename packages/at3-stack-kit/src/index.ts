@@ -4,8 +4,8 @@
  */
 
 // CLI utilities
-export { program } from "./cli.js";
+export { program } from './cli.js'
 // Core detection and analysis
-export * from "./detect.js";
+export * from './detect.js'
 // Feature addition modules
-export * from "./features/index.js";
+export * from './features/index.js'

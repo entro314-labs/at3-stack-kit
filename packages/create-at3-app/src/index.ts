@@ -5,9 +5,9 @@
  * Create AT3 (AIT3E) apps with a single command
  */
 
-import { existsSync, promises as fs } from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { existsSync, promises as fs } from 'node:fs'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import {
   cancel,
   confirm,
@@ -18,205 +18,205 @@ import {
   select,
   spinner,
   text,
-} from "@clack/prompts";
-import chalk from "chalk";
-import { program } from "commander";
-import spawn from "cross-spawn";
-import { detect as detectPackageManager } from "detect-package-manager";
-import validateNpmPackageName from "validate-npm-package-name";
-import { formatFeatures } from "./utils/cli-styling.js";
-import { createAT3Config, getWorkflowSuggestions, suggestAT3Tools } from "./utils/integration.js";
+} from '@clack/prompts'
+import chalk from 'chalk'
+import { program } from 'commander'
+import spawn from 'cross-spawn'
+import { detect as detectPackageManager } from 'detect-package-manager'
+import validateNpmPackageName from 'validate-npm-package-name'
+import { formatFeatures } from './utils/cli-styling.js'
+import { createAT3Config, getWorkflowSuggestions, suggestAT3Tools } from './utils/integration.js'
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
 
 // Template configurations
 const TEMPLATES = {
   t3: {
-    name: "T3 Base",
-    description: "Classic T3 stack: Next.js + TypeScript + Tailwind + tRPC",
-    features: ["nextjs", "typescript", "tailwind", "trpc"],
+    name: 'T3 Base',
+    description: 'Classic T3 stack: Next.js + TypeScript + Tailwind + tRPC',
+    features: ['nextjs', 'typescript', 'tailwind', 'trpc'],
   },
-  "t3-edge": {
-    name: "T3 + Edge",
-    description: "T3 stack + Supabase for edge-first deployment",
-    features: ["nextjs", "typescript", "tailwind", "supabase", "edge"],
+  't3-edge': {
+    name: 'T3 + Edge',
+    description: 'T3 stack + Supabase for edge-first deployment',
+    features: ['nextjs', 'typescript', 'tailwind', 'supabase', 'edge'],
   },
-  "t3-ai-custom": {
-    name: "T3 + AI (Custom)",
-    description: "T3 + custom AI integration with multiple providers",
-    features: ["nextjs", "typescript", "tailwind", "custom-ai", "openai", "anthropic"],
+  't3-ai-custom': {
+    name: 'T3 + AI (Custom)',
+    description: 'T3 + custom AI integration with multiple providers',
+    features: ['nextjs', 'typescript', 'tailwind', 'custom-ai', 'openai', 'anthropic'],
   },
-  "t3-ai-vercel": {
-    name: "T3 + AI (Vercel SDK)",
-    description: "T3 + Vercel AI SDK integration",
-    features: ["nextjs", "typescript", "tailwind", "vercel-ai", "streaming"],
+  't3-ai-vercel': {
+    name: 'T3 + AI (Vercel SDK)',
+    description: 'T3 + Vercel AI SDK integration',
+    features: ['nextjs', 'typescript', 'tailwind', 'vercel-ai', 'streaming'],
   },
-  "t3-ai-both": {
-    name: "T3 + AI (Both)",
-    description: "T3 + both custom AI and Vercel SDK integration",
-    features: ["nextjs", "typescript", "tailwind", "custom-ai", "vercel-ai", "streaming"],
+  't3-ai-both': {
+    name: 'T3 + AI (Both)',
+    description: 'T3 + both custom AI and Vercel SDK integration',
+    features: ['nextjs', 'typescript', 'tailwind', 'custom-ai', 'vercel-ai', 'streaming'],
   },
   suggested: {
-    name: "AT3 Suggested",
-    description: "Everything included: T3 + Supabase + AI + PWA + i18n + testing",
+    name: 'AT3 Suggested',
+    description: 'Everything included: T3 + Supabase + AI + PWA + i18n + testing',
     features: [
-      "nextjs",
-      "typescript",
-      "tailwind",
-      "supabase",
-      "custom-ai",
-      "vercel-ai",
-      "pwa",
-      "i18n",
-      "testing",
-      "edge",
+      'nextjs',
+      'typescript',
+      'tailwind',
+      'supabase',
+      'custom-ai',
+      'vercel-ai',
+      'pwa',
+      'i18n',
+      'testing',
+      'edge',
     ],
   },
-  "83-flavor": {
-    name: "83 Flavor",
-    description: "Signature stack: T3 + Supabase/Vercel Edge + Vercel AI SDK",
+  '83-flavor': {
+    name: '83 Flavor',
+    description: 'Signature stack: T3 + Supabase/Vercel Edge + Vercel AI SDK',
     features: [
-      "nextjs",
-      "typescript",
-      "tailwind",
-      "supabase",
-      "vercel-edge",
-      "vercel-ai",
-      "streaming",
+      'nextjs',
+      'typescript',
+      'tailwind',
+      'supabase',
+      'vercel-edge',
+      'vercel-ai',
+      'streaming',
     ],
   },
-} as const;
+} as const
 
-type Template = keyof typeof TEMPLATES;
-type PackageManager = "pnpm" | "npm" | "yarn";
+type Template = keyof typeof TEMPLATES
+type PackageManager = 'pnpm' | 'npm' | 'yarn'
 
 interface CreateAppParams {
-  projectName: string;
-  projectDir: string;
-  template: Template;
-  packageManager: PackageManager;
-  installDeps: boolean;
-  setupSupabase: boolean;
-  skipGit: boolean;
+  projectName: string
+  projectDir: string
+  template: Template
+  packageManager: PackageManager
+  installDeps: boolean
+  setupSupabase: boolean
+  skipGit: boolean
 }
 
 /**
  * Main interactive setup flow
  */
 async function main() {
-  console.clear();
+  console.clear()
 
-  intro(chalk.bgCyan.black(" create-at3-app "));
+  intro(chalk.bgCyan.black(' create-at3-app '))
 
   // Get project name
   const projectName = await text({
-    message: "What is your project named?",
-    placeholder: "my-at3-app",
+    message: 'What is your project named?',
+    placeholder: 'my-at3-app',
     validate(value) {
-      if (!value) return "Project name is required";
+      if (!value) return 'Project name is required'
 
-      const validation = validateNpmPackageName(value);
+      const validation = validateNpmPackageName(value)
       if (!validation.validForNewPackages) {
-        return "Invalid project name. Use lowercase letters, numbers, and hyphens only.";
+        return 'Invalid project name. Use lowercase letters, numbers, and hyphens only.'
       }
-      return;
+      return
     },
-  });
+  })
 
   if (isCancel(projectName)) {
-    cancel("Operation cancelled.");
-    process.exit(0);
+    cancel('Operation cancelled.')
+    process.exit(0)
   }
 
   // Get template selection
   const template = await select({
-    message: "Which template would you like to use?",
+    message: 'Which template would you like to use?',
     options: Object.entries(TEMPLATES).map(([key, template]) => ({
       value: key,
       label: template.name,
       hint: template.description,
     })),
-  });
+  })
 
   if (isCancel(template)) {
-    cancel("Operation cancelled.");
-    process.exit(0);
+    cancel('Operation cancelled.')
+    process.exit(0)
   }
 
   // Detect or ask for package manager preference
-  let detectedPackageManager: PackageManager = "pnpm";
+  let detectedPackageManager: PackageManager = 'pnpm'
   try {
-    detectedPackageManager = (await detectPackageManager({ cwd: process.cwd() })) as PackageManager;
+    detectedPackageManager = (await detectPackageManager({ cwd: process.cwd() })) as PackageManager
   } catch {
     // Fall back to file-based detection
-    if (existsSync(path.join(process.cwd(), "pnpm-lock.yaml"))) detectedPackageManager = "pnpm";
-    else if (existsSync(path.join(process.cwd(), "yarn.lock"))) detectedPackageManager = "yarn";
-    else if (existsSync(path.join(process.cwd(), "package-lock.json")))
-      detectedPackageManager = "npm";
+    if (existsSync(path.join(process.cwd(), 'pnpm-lock.yaml'))) detectedPackageManager = 'pnpm'
+    else if (existsSync(path.join(process.cwd(), 'yarn.lock'))) detectedPackageManager = 'yarn'
+    else if (existsSync(path.join(process.cwd(), 'package-lock.json')))
+      detectedPackageManager = 'npm'
   }
 
   const packageManager = await select({
-    message: "Which package manager would you like to use?",
+    message: 'Which package manager would you like to use?',
     options: [
-      { value: "pnpm", label: "pnpm", hint: "Recommended - fast and efficient" },
-      { value: "npm", label: "npm", hint: "Default Node.js package manager" },
-      { value: "yarn", label: "yarn", hint: "Popular alternative" },
+      { value: 'pnpm', label: 'pnpm', hint: 'Recommended - fast and efficient' },
+      { value: 'npm', label: 'npm', hint: 'Default Node.js package manager' },
+      { value: 'yarn', label: 'yarn', hint: 'Popular alternative' },
     ],
     initialValue: detectedPackageManager,
-  });
+  })
 
   if (isCancel(packageManager)) {
-    cancel("Operation cancelled.");
-    process.exit(0);
+    cancel('Operation cancelled.')
+    process.exit(0)
   }
 
   // Ask about dependency installation
   const installDeps = await confirm({
-    message: "Install dependencies?",
+    message: 'Install dependencies?',
     initialValue: true,
-  });
+  })
 
   if (isCancel(installDeps)) {
-    cancel("Operation cancelled.");
-    process.exit(0);
+    cancel('Operation cancelled.')
+    process.exit(0)
   }
 
   // Ask about Supabase setup
   const setupSupabase = await confirm({
-    message: "Set up Supabase project?",
+    message: 'Set up Supabase project?',
     initialValue: true,
-  });
+  })
 
   if (isCancel(setupSupabase)) {
-    cancel("Operation cancelled.");
-    process.exit(0);
+    cancel('Operation cancelled.')
+    process.exit(0)
   }
 
   // Ask about Git initialization
   const skipGit = await confirm({
-    message: "Initialize Git repository?",
+    message: 'Initialize Git repository?',
     initialValue: true,
-  });
+  })
 
   if (isCancel(skipGit)) {
-    cancel("Operation cancelled.");
-    process.exit(0);
+    cancel('Operation cancelled.')
+    process.exit(0)
   }
 
-  const projectDir = path.resolve(process.cwd(), projectName);
+  const projectDir = path.resolve(process.cwd(), projectName)
 
   // Check if directory exists
   try {
-    await fs.access(projectDir);
+    await fs.access(projectDir)
     const overwrite = await confirm({
       message: `Directory ${projectName} already exists. Overwrite?`,
       initialValue: false,
-    });
+    })
 
     if (isCancel(overwrite) || !overwrite) {
-      cancel("Operation cancelled.");
-      process.exit(0);
+      cancel('Operation cancelled.')
+      process.exit(0)
     }
   } catch {
     // Directory doesn't exist, continue
@@ -231,51 +231,51 @@ async function main() {
     installDeps,
     setupSupabase,
     skipGit: !skipGit,
-  });
+  })
 
   // Create AT3 configuration for project tracking
-  const selectedTemplate = TEMPLATES[template as Template];
+  const selectedTemplate = TEMPLATES[template as Template]
   createAT3Config(projectDir, {
     template: template as string,
     features: [...selectedTemplate.features],
-    toolsUsed: ["create-at3-app"],
-  });
+    toolsUsed: ['create-at3-app'],
+  })
 
   // Get tool suggestions and workflows
-  const toolSuggestions = suggestAT3Tools(template as string, [...selectedTemplate.features]);
-  const _workflows = getWorkflowSuggestions(template as string);
+  const toolSuggestions = suggestAT3Tools(template as string, [...selectedTemplate.features])
+  const _workflows = getWorkflowSuggestions(template as string)
 
-  outro(chalk.green("🎉 Your AT3 app is ready!"));
+  outro(chalk.green('🎉 Your AT3 app is ready!'))
 
   note(
     `
-${chalk.cyan("Next steps:")}
+${chalk.cyan('Next steps:')}
 
-  ${chalk.dim("1.")} cd ${projectName}
-  ${chalk.dim("2.")} Copy .env.example to .env.local and add your API keys
-  ${chalk.dim("3.")} ${packageManager} dev
+  ${chalk.dim('1.')} cd ${projectName}
+  ${chalk.dim('2.')} Copy .env.example to .env.local and add your API keys
+  ${chalk.dim('3.')} ${packageManager} dev
 
-${chalk.cyan("Template features:")}
+${chalk.cyan('Template features:')}
   ${formatFeatures([...selectedTemplate.features])}
 
-${chalk.cyan("Documentation:")}
-  ${chalk.dim("•")} Getting Started: https://at3-stack.dev/docs/getting-started
-  ${chalk.dim("•")} AI Integration: https://at3-stack.dev/docs/ai-integration
-  ${chalk.dim("•")} Deployment: https://at3-stack.dev/docs/deployment
+${chalk.cyan('Documentation:')}
+  ${chalk.dim('•')} Getting Started: https://at3-stack.dev/docs/getting-started
+  ${chalk.dim('•')} AI Integration: https://at3-stack.dev/docs/ai-integration
+  ${chalk.dim('•')} Deployment: https://at3-stack.dev/docs/deployment
 
 ${
   toolSuggestions.length > 0
-    ? `${chalk.cyan("AT3 Ecosystem:")}
-  ${toolSuggestions.map((s) => `${chalk.dim("•")} ${s}`).join("\n  ")}
+    ? `${chalk.cyan('AT3 Ecosystem:')}
+  ${toolSuggestions.map((s) => `${chalk.dim('•')} ${s}`).join('\n  ')}
 
 `
-    : ""
-}${chalk.cyan("Community:")}
-  ${chalk.dim("•")} GitHub: https://github.com/entro314-labs/at3-stack-kit
-  ${chalk.dim("•")} Discord: https://discord.gg/at3-stack
+    : ''
+}${chalk.cyan('Community:')}
+  ${chalk.dim('•')} GitHub: https://github.com/entro314-labs/at3-stack-kit
+  ${chalk.dim('•')} Discord: https://discord.gg/at3-stack
   `,
-    "Welcome to AT3!"
-  );
+    'Welcome to AT3!'
+  )
 }
 
 /**
@@ -283,45 +283,45 @@ ${
  */
 async function createApp(params: CreateAppParams) {
   const { projectName, projectDir, template, packageManager, installDeps, setupSupabase, skipGit } =
-    params;
+    params
 
-  const s = spinner();
+  const s = spinner()
 
   try {
     // Create project structure
-    s.start("Creating project structure...");
-    await copyTemplate(template, projectDir);
-    s.stop("Project structure created");
+    s.start('Creating project structure...')
+    await copyTemplate(template, projectDir)
+    s.stop('Project structure created')
 
     // Update package.json
-    s.start("Updating package.json...");
-    await updatePackageJson(projectDir, projectName);
-    s.stop("package.json updated");
+    s.start('Updating package.json...')
+    await updatePackageJson(projectDir, projectName)
+    s.stop('package.json updated')
 
     // Initialize Git
     if (!skipGit) {
-      s.start("Initializing Git repository...");
-      await initGit(projectDir);
-      s.stop("Git repository initialized");
+      s.start('Initializing Git repository...')
+      await initGit(projectDir)
+      s.stop('Git repository initialized')
     }
 
     // Install dependencies
     if (installDeps) {
-      s.start(`Installing dependencies with ${packageManager}...`);
-      await installDependencies(projectDir, packageManager);
-      s.stop("Dependencies installed");
+      s.start(`Installing dependencies with ${packageManager}...`)
+      await installDependencies(projectDir, packageManager)
+      s.stop('Dependencies installed')
     }
 
     // Setup Supabase
     if (setupSupabase) {
-      s.start("Setting up Supabase...");
-      await setupSupabaseProject(projectDir, packageManager);
-      s.stop("Supabase configured");
+      s.start('Setting up Supabase...')
+      await setupSupabaseProject(projectDir, packageManager)
+      s.stop('Supabase configured')
     }
   } catch (error) {
-    s.stop("Error occurred");
-    console.error(chalk.red("Error creating app:"), error);
-    process.exit(1);
+    s.stop('Error occurred')
+    console.error(chalk.red('Error creating app:'), error)
+    process.exit(1)
   }
 }
 
@@ -330,39 +330,39 @@ async function createApp(params: CreateAppParams) {
  */
 async function copyTemplate(template: Template, projectDir: string) {
   // Try to find template-specific directory first
-  const templateDir = path.resolve(__dirname, `../templates/${template}`);
-  let sourceDir: string;
+  const templateDir = path.resolve(__dirname, `../templates/${template}`)
+  let sourceDir: string
 
   try {
-    await fs.access(templateDir);
-    sourceDir = templateDir;
+    await fs.access(templateDir)
+    sourceDir = templateDir
   } catch {
     // Fall back to using the monorepo root as template
-    sourceDir = path.resolve(__dirname, "../../../");
+    sourceDir = path.resolve(__dirname, '../../../')
   }
 
   await fs.cp(sourceDir, projectDir, {
     recursive: true,
     filter: (src) => {
-      const basename = path.basename(src);
+      const basename = path.basename(src)
       const skipList = [
-        "node_modules",
-        ".git",
-        ".next",
-        "dist",
-        "build",
-        ".turbo",
-        ".env.local",
-        "packages", // Don't copy the packages directory
-      ];
-      return !skipList.includes(basename);
+        'node_modules',
+        '.git',
+        '.next',
+        'dist',
+        'build',
+        '.turbo',
+        '.env.local',
+        'packages', // Don't copy the packages directory
+      ]
+      return !skipList.includes(basename)
     },
-  });
+  })
 
   // Ensure .env.example exists
-  const envExamplePath = path.join(projectDir, ".env.example");
+  const envExamplePath = path.join(projectDir, '.env.example')
   try {
-    await fs.access(envExamplePath);
+    await fs.access(envExamplePath)
   } catch {
     // Create a basic .env.example if it doesn't exist
     const envContent = `# Supabase
@@ -385,8 +385,8 @@ NEXT_PUBLIC_GA_ID=your_google_analytics_id
 # Other
 NEXTAUTH_SECRET=your_nextauth_secret
 NEXTAUTH_URL=http://localhost:3000
-`;
-    await fs.writeFile(envExamplePath, envContent);
+`
+    await fs.writeFile(envExamplePath, envContent)
   }
 }
 
@@ -394,14 +394,14 @@ NEXTAUTH_URL=http://localhost:3000
  * Update package.json with project name and version
  */
 async function updatePackageJson(projectDir: string, projectName: string) {
-  const packageJsonPath = path.join(projectDir, "package.json");
-  const packageJson = JSON.parse(await fs.readFile(packageJsonPath, "utf-8"));
+  const packageJsonPath = path.join(projectDir, 'package.json')
+  const packageJson = JSON.parse(await fs.readFile(packageJsonPath, 'utf-8'))
 
-  packageJson.name = projectName;
-  packageJson.version = "0.1.0";
-  packageJson.author = undefined; // Remove template author
+  packageJson.name = projectName
+  packageJson.version = '0.1.0'
+  packageJson.author = undefined // Remove template author
 
-  await fs.writeFile(packageJsonPath, JSON.stringify(packageJson, null, 2));
+  await fs.writeFile(packageJsonPath, JSON.stringify(packageJson, null, 2))
 }
 
 /**
@@ -409,19 +409,19 @@ async function updatePackageJson(projectDir: string, projectName: string) {
  */
 function initGit(projectDir: string): Promise<void> {
   return new Promise((resolve, reject) => {
-    const child = spawn("git", ["init"], {
+    const child = spawn('git', ['init'], {
       cwd: projectDir,
-      stdio: "ignore",
-    });
+      stdio: 'ignore',
+    })
 
-    child.on("close", (code) => {
+    child.on('close', (code) => {
       if (code === 0) {
-        resolve();
+        resolve()
       } else {
-        reject(new Error(`Git init failed with code ${code}`));
+        reject(new Error(`Git init failed with code ${code}`))
       }
-    });
-  });
+    })
+  })
 }
 
 /**
@@ -429,19 +429,19 @@ function initGit(projectDir: string): Promise<void> {
  */
 function installDependencies(projectDir: string, packageManager: PackageManager): Promise<void> {
   return new Promise((resolve, reject) => {
-    const child = spawn(packageManager, ["install"], {
+    const child = spawn(packageManager, ['install'], {
       cwd: projectDir,
-      stdio: "inherit",
-    });
+      stdio: 'inherit',
+    })
 
-    child.on("close", (code) => {
+    child.on('close', (code) => {
       if (code === 0) {
-        resolve();
+        resolve()
       } else {
-        reject(new Error(`Package installation failed with code ${code}`));
+        reject(new Error(`Package installation failed with code ${code}`))
       }
-    });
-  });
+    })
+  })
 }
 
 /**
@@ -449,39 +449,39 @@ function installDependencies(projectDir: string, packageManager: PackageManager)
  */
 function setupSupabaseProject(projectDir: string, packageManager: PackageManager): Promise<void> {
   return new Promise((resolve, _reject) => {
-    const child = spawn(packageManager, ["dlx", "supabase", "init"], {
+    const child = spawn(packageManager, ['dlx', 'supabase', 'init'], {
       cwd: projectDir,
-      stdio: "inherit",
-    });
+      stdio: 'inherit',
+    })
 
-    child.on("close", (code) => {
+    child.on('close', (code) => {
       if (code === 0) {
-        resolve();
+        resolve()
       } else {
         console.warn(
-          chalk.yellow("Warning: Supabase setup failed. You can set it up manually later.")
-        );
-        resolve(); // Don't fail the entire process
+          chalk.yellow('Warning: Supabase setup failed. You can set it up manually later.')
+        )
+        resolve() // Don't fail the entire process
       }
-    });
-  });
+    })
+  })
 }
 
 // CLI Setup
 program
-  .name("create-at3-app")
-  .description("Create AT3 (AIT3E) apps with a single command")
-  .version("0.1.0")
-  .argument("[project-name]", "Name of the project")
-  .option("-t, --template <template>", "Template to use", "minimal")
-  .option("--pm <package-manager>", "Package manager to use", "pnpm")
-  .option("--no-install", "Skip installing dependencies")
-  .option("--no-git", "Skip Git initialization")
-  .option("--no-supabase", "Skip Supabase setup")
+  .name('create-at3-app')
+  .description('Create AT3 (AIT3E) apps with a single command')
+  .version('0.1.0')
+  .argument('[project-name]', 'Name of the project')
+  .option('-t, --template <template>', 'Template to use', 'minimal')
+  .option('--pm <package-manager>', 'Package manager to use', 'pnpm')
+  .option('--no-install', 'Skip installing dependencies')
+  .option('--no-git', 'Skip Git initialization')
+  .option('--no-supabase', 'Skip Supabase setup')
   .action(async (projectName, options) => {
     if (projectName) {
       // Non-interactive mode
-      const projectDir = path.resolve(process.cwd(), projectName);
+      const projectDir = path.resolve(process.cwd(), projectName)
 
       await createApp({
         projectName,
@@ -491,13 +491,13 @@ program
         installDeps: options.install !== false,
         setupSupabase: options.supabase !== false,
         skipGit: options.git === false,
-      });
+      })
 
-      console.log(chalk.green(`✅ Created ${projectName} successfully!`));
+      console.log(chalk.green(`✅ Created ${projectName} successfully!`))
     } else {
       // Interactive mode
-      await main();
+      await main()
     }
-  });
+  })
 
-program.parse();
+program.parse()

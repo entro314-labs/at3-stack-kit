@@ -2,23 +2,23 @@
  * Supabase utilities for AT3 Stack
  */
 
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import { z } from "zod";
+import { createClient, type SupabaseClient } from '@supabase/supabase-js'
+import { z } from 'zod'
 
 // Supabase configuration schema
 export const supabaseConfigSchema = z.object({
   url: z.string().url(),
   anonKey: z.string(),
   serviceRoleKey: z.string().optional(),
-});
+})
 
-export type SupabaseConfig = z.infer<typeof supabaseConfigSchema>;
+export type SupabaseConfig = z.infer<typeof supabaseConfigSchema>
 
 /**
  * Validate Supabase configuration
  */
 export function validateSupabaseConfig(config: unknown): SupabaseConfig {
-  return supabaseConfigSchema.parse(config);
+  return supabaseConfigSchema.parse(config)
 }
 
 /**
@@ -30,7 +30,7 @@ export function createSupabaseClient(config: SupabaseConfig): SupabaseClient {
       autoRefreshToken: true,
       persistSession: true,
     },
-  });
+  })
 }
 
 /**
@@ -38,7 +38,7 @@ export function createSupabaseClient(config: SupabaseConfig): SupabaseClient {
  */
 export function createSupabaseAdminClient(config: SupabaseConfig): SupabaseClient {
   if (!config.serviceRoleKey) {
-    throw new Error("Service role key is required for admin client");
+    throw new Error('Service role key is required for admin client')
   }
 
   return createClient(config.url, config.serviceRoleKey, {
@@ -46,7 +46,7 @@ export function createSupabaseAdminClient(config: SupabaseConfig): SupabaseClien
       autoRefreshToken: false,
       persistSession: false,
     },
-  });
+  })
 }
 
 /**
@@ -57,20 +57,20 @@ export function getSupabaseConfigFromEnv(): SupabaseConfig {
     url: process.env.NEXT_PUBLIC_SUPABASE_URL,
     anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
-  };
-
-  if (!config.url || !config.anonKey) {
-    throw new Error("Missing required Supabase environment variables");
   }
 
-  return validateSupabaseConfig(config);
+  if (!(config.url && config.anonKey)) {
+    throw new Error('Missing required Supabase environment variables')
+  }
+
+  return validateSupabaseConfig(config)
 }
 
 // Common database types and utilities
 export interface BaseRecord {
-  id: string;
-  created_at: string;
-  updated_at: string;
+  id: string
+  created_at: string
+  updated_at: string
 }
 
 /**
@@ -86,31 +86,31 @@ export class QueryBuilder<T extends BaseRecord> {
    * Select records with type safety
    */
   select(columns?: string) {
-    return this.client.from(this.table).select(columns || "*");
+    return this.client.from(this.table).select(columns || '*')
   }
 
   /**
    * Insert a new record
    */
-  insert(data: Omit<T, "id" | "created_at" | "updated_at">) {
-    return this.client.from(this.table).insert(data);
+  insert(data: Omit<T, 'id' | 'created_at' | 'updated_at'>) {
+    return this.client.from(this.table).insert(data)
   }
 
   /**
    * Update a record by ID
    */
-  update(id: string, data: Partial<Omit<T, "id" | "created_at">>) {
+  update(id: string, data: Partial<Omit<T, 'id' | 'created_at'>>) {
     return this.client
       .from(this.table)
       .update({ ...data, updated_at: new Date().toISOString() })
-      .eq("id", id);
+      .eq('id', id)
   }
 
   /**
    * Delete a record by ID
    */
   delete(id: string) {
-    return this.client.from(this.table).delete().eq("id", id);
+    return this.client.from(this.table).delete().eq('id', id)
   }
 }
 
@@ -121,4 +121,4 @@ export type {
   Session,
   SupabaseClient,
   User,
-} from "@supabase/supabase-js";
+} from '@supabase/supabase-js'

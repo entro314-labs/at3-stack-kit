@@ -54,7 +54,10 @@
     "dev": "tsup --watch",
     "test": "vitest",
     "test:ci": "vitest run",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "check": "biome check src/",
+    "check:fix": "biome check --write src/"
+    
   },
   "dependencies": {
     "@clack/prompts": "^0.11.0",
