@@ -78,7 +78,7 @@
     "columnify": "^1.6.0",
     "figures": "^6.1.0",
     "gradient-string": "^3.0.0",
-    "ora": "^8.2.0",
+    "ora": "^9.0.0",
     "tsup": "^8.5.0",
     "typescript": "^5.9.2",
     "vitest": "^3.2.4"
