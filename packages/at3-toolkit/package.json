@@ -92,7 +92,7 @@
     "gradient-string": "^3.0.0",
     "semver": "^7.7.2",
     "toml": "^3.0.0",
-    "validate-npm-package-name": "^6.0.2",
+    "validate-npm-package-name": "^7.0.0",
     "yaml": "^2.8.1"
   },
   "devDependencies": {
