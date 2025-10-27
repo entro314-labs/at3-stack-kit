@@ -65,7 +65,7 @@
     "cross-spawn": "^7.0.6",
     "detect-package-manager": "^3.0.2",
     "fs-extra": "^11.3.2",
-    "validate-npm-package-name": "^6.0.2"
+    "validate-npm-package-name": "^7.0.0"
   },
   "devDependencies": {
     "@types/cross-spawn": "^6.0.6",
