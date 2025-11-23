@@ -17,7 +17,6 @@
         "name": "next"
       }
     ],
-    "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
       "@/components/*": ["./src/components/*"],
@@ -27,7 +26,7 @@
       "@/types/*": ["./src/types/*"],
       "@/app/*": ["./src/app/*"]
     },
-    "target": "es2017",
+    "target": "es2022",
     "forceConsistentCasingInFileNames": true,
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
