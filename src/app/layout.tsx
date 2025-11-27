@@ -1,11 +1,30 @@
-import { Analytics } from '@vercel/analytics/react'
-import { SpeedInsights } from '@vercel/speed-insights/next'
 import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 
 import { cn } from '@/lib/utils'
 
 import './globals.css'
+
+// Vercel Analytics and Speed Insights components (optional)
+// Install with: pnpm add @vercel/analytics @vercel/speed-insights
+function VercelAnalytics() {
+  try {
+    // Dynamic import to avoid build errors when packages aren't installed
+    const { Analytics } = require('@vercel/analytics/react')
+    return <Analytics />
+  } catch {
+    return null
+  }
+}
+
+function VercelSpeedInsights() {
+  try {
+    const { SpeedInsights } = require('@vercel/speed-insights/next')
+    return <SpeedInsights />
+  } catch {
+    return null
+  }
+}
 
 const inter = Inter({
   subsets: ['latin'],
@@ -93,8 +112,8 @@ export default function RootLayout({ children }: RootLayoutProps) {
         suppressHydrationWarning
       >
         {children}
-        <Analytics />
-        <SpeedInsights />
+        <VercelAnalytics />
+        <VercelSpeedInsights />
       </body>
     </html>
   )

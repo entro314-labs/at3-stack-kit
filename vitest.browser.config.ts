@@ -4,14 +4,19 @@ import { resolve } from "node:path";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vitest/config";
 
+// Note: Vitest 4.x browser mode requires @vitest/browser and a provider package
+// Run: pnpm add -D @vitest/browser @playwright/test
 export default defineConfig({
   plugins: [react()],
   test: {
     // Browser testing configuration
     browser: {
       enabled: true,
-      name: "chromium",
-      provider: "playwright",
+      instances: [
+        {
+          browser: "chromium",
+        },
+      ],
 
       // Browser-specific settings
       headless: true,
@@ -21,19 +26,6 @@ export default defineConfig({
       viewport: {
         width: 1280,
         height: 720,
-      },
-
-      // Provider options for Playwright
-      providerOptions: {
-        launch: {
-          args: ["--no-sandbox", "--disable-setuid-sandbox"],
-          devtools: false,
-        },
-        context: {
-          // Context options
-          ignoreHTTPSErrors: true,
-          viewport: { width: 1280, height: 720 },
-        },
       },
     },
 
@@ -68,14 +60,6 @@ export default defineConfig({
 
     // Retry configuration for flaky browser tests
     retry: 2,
-
-    // Pool configuration
-    pool: "forks",
-    poolOptions: {
-      forks: {
-        singleFork: true,
-      },
-    },
   },
 
   // Resolve configuration

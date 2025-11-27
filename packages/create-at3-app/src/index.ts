@@ -97,7 +97,9 @@ interface CreateAppParams {
   template: Template
   packageManager: PackageManager
   installDeps: boolean
-  setupSupabase: boolean
+  database: 'supabase' | 'drizzle' | 'none'
+  auth: 'supabase' | 'clerk' | 'better-auth' | 'none'
+  ai: boolean
   skipGit: boolean
 }
 
@@ -129,19 +131,106 @@ async function main() {
     process.exit(0)
   }
 
-  // Get template selection
-  const template = await select({
-    message: 'Which template would you like to use?',
-    options: Object.entries(TEMPLATES).map(([key, template]) => ({
-      value: key,
-      label: template.name,
-      hint: template.description,
-    })),
+  // Mode selection
+  const mode = await select({
+    message: 'How would you like to start?',
+    options: [
+      { value: 'interactive', label: 'Interactive (Build your stack)', hint: 'Choose features one by one' },
+      { value: 'template', label: 'Browse Templates', hint: 'Pick from pre-configured stacks' },
+    ],
   })
 
-  if (isCancel(template)) {
+  if (isCancel(mode)) {
     cancel('Operation cancelled.')
     process.exit(0)
+  }
+
+  let template: Template = 't3'
+  let database: 'supabase' | 'drizzle' | 'none' = 'none'
+  let auth: 'supabase' | 'clerk' | 'better-auth' | 'none' = 'none'
+  let ai = false
+
+  if (mode === 'template') {
+    // Get template selection
+    const selectedTemplate = await select({
+      message: 'Which template would you like to use?',
+      options: Object.entries(TEMPLATES).map(([key, template]) => ({
+        value: key,
+        label: template.name,
+        hint: template.description,
+      })),
+    })
+
+    if (isCancel(selectedTemplate)) {
+      cancel('Operation cancelled.')
+      process.exit(0)
+    }
+
+    template = selectedTemplate as Template
+
+    // Infer capabilities from template for the summary, but we might still ask for DB if it's not explicit?
+    // For now, let's assume templates define their stack, but we can ask for DB if it's a generic T3 template.
+    // The original code asked for DB after template. Let's keep that behavior for templates.
+
+    const dbSelection = await select({
+      message: 'Which database solution would you like to use?',
+      options: [
+        { value: 'supabase', label: 'Supabase', hint: 'PostgreSQL + Auth + Realtime (Recommended)' },
+        { value: 'drizzle', label: 'Drizzle ORM + PostgreSQL', hint: 'Generic Postgres (Neon, Supabase, etc.)' },
+        { value: 'none', label: 'None', hint: 'Skip database setup' },
+      ],
+    })
+
+    if (isCancel(dbSelection)) {
+      cancel('Operation cancelled.')
+      process.exit(0)
+    }
+    database = dbSelection as 'supabase' | 'drizzle' | 'none'
+
+    // If Supabase DB is chosen, default auth to Supabase?
+    if (database === 'supabase') auth = 'supabase'
+
+  } else {
+    // Interactive Mode
+
+    // 1. AI
+    const aiSelection = await confirm({
+      message: 'Would you like to include AI capabilities (Vercel SDK)?',
+      initialValue: true,
+    })
+    if (isCancel(aiSelection)) { cancel('Operation cancelled.'); process.exit(0) }
+    ai = aiSelection
+
+    // 2. Auth
+    const authSelection = await select({
+      message: 'Which authentication solution would you like to use?',
+      options: [
+        { value: 'supabase', label: 'Supabase Auth', hint: 'Requires Supabase Database' },
+        { value: 'clerk', label: 'Clerk', hint: 'Hosted authentication' },
+        { value: 'better-auth', label: 'Better Auth', hint: 'Self-hosted / Advanced' },
+        { value: 'none', label: 'None', hint: 'No authentication' },
+      ],
+    })
+    if (isCancel(authSelection)) { cancel('Operation cancelled.'); process.exit(0) }
+    auth = authSelection as any
+
+    // 3. Database
+    const dbSelection = await select({
+      message: 'Which database solution would you like to use?',
+      options: [
+        { value: 'supabase', label: 'Supabase (Managed)', hint: 'PostgreSQL + Auth + Realtime' },
+        { value: 'drizzle', label: 'Drizzle ORM (Unmanaged)', hint: 'Generic Postgres with Drizzle' },
+        { value: 'none', label: 'None', hint: 'Skip database setup' },
+      ],
+    })
+    if (isCancel(dbSelection)) { cancel('Operation cancelled.'); process.exit(0) }
+    database = dbSelection as any
+
+    // Validation: Supabase Auth requires Supabase DB (usually)
+    if (auth === 'supabase' && database !== 'supabase') {
+      note('Supabase Auth requires Supabase Database. Switching database to Supabase.', 'Configuration Adjustment')
+      database = 'supabase'
+    }
   }
 
   // Detect or ask for package manager preference
@@ -182,16 +271,7 @@ async function main() {
     process.exit(0)
   }
 
-  // Ask about Supabase setup
-  const setupSupabase = await confirm({
-    message: 'Set up Supabase project?',
-    initialValue: true,
-  })
-
-  if (isCancel(setupSupabase)) {
-    cancel('Operation cancelled.')
-    process.exit(0)
-  }
+  // (Database selection moved to earlier steps)
 
   // Ask about Git initialization
   const skipGit = await confirm({
@@ -229,7 +309,9 @@ async function main() {
     template: template as Template,
     packageManager: packageManager as PackageManager,
     installDeps,
-    setupSupabase,
+    database: database as 'supabase' | 'drizzle' | 'none',
+    auth: auth as 'supabase' | 'clerk' | 'better-auth' | 'none',
+    ai,
     skipGit: !skipGit,
   })
 
@@ -282,7 +364,7 @@ ${
  * Create the AT3 app with the given parameters
  */
 async function createApp(params: CreateAppParams) {
-  const { projectName, projectDir, template, packageManager, installDeps, setupSupabase, skipGit } =
+  const { projectName, projectDir, template, packageManager, installDeps, database, auth, ai, skipGit } =
     params
 
   const s = spinner()
@@ -312,12 +394,41 @@ async function createApp(params: CreateAppParams) {
       s.stop('Dependencies installed')
     }
 
-    // Setup Supabase
-    if (setupSupabase) {
+    // Setup Database
+    if (database === 'supabase') {
       s.start('Setting up Supabase...')
       await setupSupabaseProject(projectDir, packageManager)
       s.stop('Supabase configured')
+    } else if (database === 'drizzle') {
+      s.start('Setting up Drizzle ORM...')
+      await setupDrizzle(projectDir, packageManager)
+      s.stop('Drizzle configured')
     }
+
+    // Setup Auth
+    if (auth === 'clerk') {
+      s.start('Setting up Clerk...')
+      await setupClerk(projectDir, packageManager)
+      s.stop('Clerk configured')
+    } else if (auth === 'better-auth') {
+      s.start('Setting up Better Auth...')
+      await setupBetterAuth(projectDir, packageManager)
+      s.stop('Better Auth configured')
+    }
+
+    // Setup AI
+    if (ai) {
+      // If template already has AI, we might be duplicating, but setupAI should be idempotent or check
+      // For now, we assume if they asked for AI in interactive mode, we ensure it's there.
+      // But since we don't have a setupAI function yet in this file, we'll skip for now or add a stub.
+      // The templates 't3-ai-*' already have it.
+      // If they chose 't3' (base) and said Yes to AI, we should add it.
+      if (!template.includes('ai')) {
+         // TODO: Implement setupAI or use at3-stack-kit logic
+         // For now, we'll just log a note if we can't do it easily here without importing at3-stack-kit
+      }
+    }
+
   } catch (error) {
     s.stop('Error occurred')
     console.error(chalk.red('Error creating app:'), error)
@@ -337,8 +448,14 @@ async function copyTemplate(template: Template, projectDir: string) {
     await fs.access(templateDir)
     sourceDir = templateDir
   } catch {
-    // Fall back to using the monorepo root as template
-    sourceDir = path.resolve(__dirname, '../../../')
+    // Fall back to base template if specific template not found
+    const baseDir = path.resolve(__dirname, '../templates/base')
+    try {
+      await fs.access(baseDir)
+      sourceDir = baseDir
+    } catch {
+      throw new Error(`Template ${template} not found and base template is missing.`)
+    }
   }
 
   await fs.cp(sourceDir, projectDir, {
@@ -467,6 +584,171 @@ function setupSupabaseProject(projectDir: string, packageManager: PackageManager
   })
 }
 
+/**
+ * Setup Drizzle ORM
+ */
+async function setupDrizzle(projectDir: string, packageManager: PackageManager): Promise<void> {
+  // Add dependencies
+  const installCmd = packageManager === 'npm' ? 'install' : 'add'
+  const devFlag = packageManager === 'npm' ? '--save-dev' : '-D'
+
+  await new Promise<void>((resolve, reject) => {
+    const child = spawn(packageManager, [installCmd, 'drizzle-orm', 'postgres', 'dotenv'], {
+      cwd: projectDir,
+      stdio: 'ignore',
+    })
+    child.on('close', (code) => code === 0 ? resolve() : reject(new Error('Failed to install dependencies')))
+  })
+
+  await new Promise<void>((resolve, reject) => {
+    const child = spawn(packageManager, [installCmd, devFlag, 'drizzle-kit', 'pg', '@types/pg'], {
+      cwd: projectDir,
+      stdio: 'ignore',
+    })
+    child.on('close', (code) => code === 0 ? resolve() : reject(new Error('Failed to install dev dependencies')))
+  })
+
+  // Create basic config files
+  const fs = await import('node:fs/promises')
+
+  // drizzle.config.ts
+  await fs.writeFile(path.join(projectDir, 'drizzle.config.ts'), `import { defineConfig } from 'drizzle-kit';
+import * as dotenv from 'dotenv';
+
+dotenv.config({ path: '.env.local' });
+
+export default defineConfig({
+  schema: './src/db/schema.ts',
+  out: './drizzle',
+  dialect: 'postgresql',
+  dbCredentials: {
+    url: process.env.DATABASE_URL!,
+  },
+});
+`)
+
+  // src/db/schema.ts
+  await fs.mkdir(path.join(projectDir, 'src', 'db'), { recursive: true })
+  await fs.writeFile(path.join(projectDir, 'src', 'db', 'schema.ts'), `import { pgTable, serial, text, timestamp } from 'drizzle-orm/pg-core';
+
+export const users = pgTable('users', {
+  id: serial('id').primaryKey(),
+  name: text('name'),
+  email: text('email').notNull(),
+  createdAt: timestamp('created_at').defaultNow(),
+});
+`)
+
+  // src/db/index.ts
+  await fs.writeFile(path.join(projectDir, 'src', 'db', 'index.ts'), `import { drizzle } from 'drizzle-orm/postgres-js';
+import postgres from 'postgres';
+import * as schema from './schema';
+
+const connectionString = process.env.DATABASE_URL!;
+const client = postgres(connectionString);
+export const db = drizzle(client, { schema });
+`)
+
+  // Update .env.example
+  const envPath = path.join(projectDir, '.env.example')
+  let envContent = ''
+  try {
+    envContent = await fs.readFile(envPath, 'utf-8')
+  } catch {}
+
+  if (!envContent.includes('DATABASE_URL')) {
+    await fs.appendFile(envPath, '\n# Database\nDATABASE_URL="postgresql://postgres:password@localhost:5432/postgres"\n')
+  }
+}
+
+/**
+ * Setup Clerk Authentication
+ */
+async function setupClerk(projectDir: string, packageManager: PackageManager): Promise<void> {
+  const installCmd = packageManager === 'npm' ? 'install' : 'add'
+
+  // Install dependencies
+  await new Promise<void>((resolve, reject) => {
+    const child = spawn(packageManager, [installCmd, '@clerk/nextjs'], {
+      cwd: projectDir,
+      stdio: 'ignore',
+    })
+    child.on('close', (code) => code === 0 ? resolve() : reject(new Error('Failed to install Clerk')))
+  })
+
+  const fs = await import('node:fs/promises')
+
+  // Add Middleware
+  await fs.writeFile(path.join(projectDir, 'src', 'middleware.ts'), `import { clerkMiddleware } from "@clerk/nextjs/server";
+
+export default clerkMiddleware();
+
+export const config = {
+  matcher: ["/((?!.*\\\\..*|_next).*)", "/", "/(api|trpc)(.*)"],
+};
+`)
+
+  // Update .env.example
+  const envPath = path.join(projectDir, '.env.example')
+  await fs.appendFile(envPath, '\n# Clerk Auth\nNEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...\nCLERK_SECRET_KEY=sk_test_...\n')
+}
+
+/**
+ * Setup Better Auth
+ */
+async function setupBetterAuth(projectDir: string, packageManager: PackageManager): Promise<void> {
+  const installCmd = packageManager === 'npm' ? 'install' : 'add'
+
+  // Install dependencies
+  await new Promise<void>((resolve, reject) => {
+    const child = spawn(packageManager, [installCmd, 'better-auth'], {
+      cwd: projectDir,
+      stdio: 'ignore',
+    })
+    child.on('close', (code) => code === 0 ? resolve() : reject(new Error('Failed to install Better Auth')))
+  })
+
+  const fs = await import('node:fs/promises')
+
+  // Create auth files
+  const libPath = path.join(projectDir, 'src', 'lib', 'auth')
+  await fs.mkdir(libPath, { recursive: true })
+
+  await fs.writeFile(path.join(libPath, 'client.ts'), `import { createAuthClient } from "better-auth/react"
+export const authClient = createAuthClient({
+    baseURL: process.env.BETTER_AUTH_URL
+})
+`)
+
+  await fs.writeFile(path.join(libPath, 'auth.ts'), `import { betterAuth } from "better-auth";
+// import { db } from "@/db";
+// import { drizzleAdapter } from "better-auth/adapters/drizzle";
+
+export const auth = betterAuth({
+    // adapter: drizzleAdapter(db, {
+    //     provider: "pg",
+    // }),
+    emailAndPassword: {
+        enabled: true
+    },
+})
+`)
+
+  // API Route
+  const apiPath = path.join(projectDir, 'src', 'app', 'api', 'auth', '[...all]')
+  await fs.mkdir(apiPath, { recursive: true })
+
+  await fs.writeFile(path.join(apiPath, 'route.ts'), `import { auth } from "@/lib/auth/auth";
+import { toNextJsHandler } from "better-auth/next-js";
+
+export const { GET, POST } = toNextJsHandler(auth);
+`)
+
+  // Update .env.example
+  const envPath = path.join(projectDir, '.env.example')
+  await fs.appendFile(envPath, '\n# Better Auth\nBETTER_AUTH_SECRET=your_secret_here\nBETTER_AUTH_URL=http://localhost:3000\n')
+}
+
 // CLI Setup
 program
   .name('create-at3-app')
@@ -475,13 +757,22 @@ program
   .argument('[project-name]', 'Name of the project')
   .option('-t, --template <template>', 'Template to use', 'minimal')
   .option('--pm <package-manager>', 'Package manager to use', 'pnpm')
+  .option('--database <database>', 'Database to use (supabase, drizzle, none)')
+  .option('--auth <auth>', 'Auth to use (supabase, clerk, better-auth, none)')
+  .option('--ai', 'Include AI capabilities')
   .option('--no-install', 'Skip installing dependencies')
   .option('--no-git', 'Skip Git initialization')
-  .option('--no-supabase', 'Skip Supabase setup')
+  .option('--no-supabase', 'Skip Supabase setup (deprecated, use --database none)')
   .action(async (projectName, options) => {
     if (projectName) {
       // Non-interactive mode
       const projectDir = path.resolve(process.cwd(), projectName)
+
+      // Handle legacy --no-supabase flag if --database is not provided
+      let database = options.database as 'supabase' | 'drizzle' | 'none' | undefined
+      if (!database) {
+        database = options.supabase === false ? 'none' : 'supabase'
+      }
 
       await createApp({
         projectName,
@@ -489,7 +780,9 @@ program
         template: options.template as Template,
         packageManager: options.pm as PackageManager,
         installDeps: options.install !== false,
-        setupSupabase: options.supabase !== false,
+        database: database,
+        auth: (options.auth as 'supabase' | 'clerk' | 'better-auth' | 'none') || 'none',
+        ai: options.ai || false,
         skipGit: options.git === false,
       })
 

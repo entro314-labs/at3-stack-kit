@@ -22,9 +22,10 @@ import { detect as detectPackageManager } from 'detect-package-manager'
 import { existsSync, readFileSync } from 'fs-extra'
 import { join } from 'path'
 import { detectProjectType, type ProjectType } from './detect.js'
-import { addAI, addI18n, addPWA, addSupabase, addTesting } from './features/index.js'
+import { addAI, addBetterAuth, addClerk, addDrizzle, addI18n, addPWA, addSupabase, addTesting } from './features/index.js'
 import { colors, header, style, symbols } from './utils/cli-styling.js'
 import { getPostMigrationWorkflow, suggestAT3Tools, updateAT3Config } from './utils/integration.js'
+import spawn from 'cross-spawn'
 
 const features = [
   {
@@ -44,6 +45,24 @@ const features = [
     name: 'Supabase',
     description: 'Add Supabase for database, auth, and edge functions',
     value: 'supabase',
+  },
+  {
+    id: 'drizzle',
+    name: 'Drizzle ORM + PostgreSQL',
+    description: 'Add Drizzle ORM with generic PostgreSQL support',
+    value: 'drizzle',
+  },
+  {
+    id: 'clerk',
+    name: 'Clerk Auth',
+    description: 'Add Clerk authentication',
+    value: 'clerk',
+  },
+  {
+    id: 'better-auth',
+    name: 'Better Auth',
+    description: 'Add Better Auth (Self-hosted auth)',
+    value: 'better-auth',
   },
   {
     id: 'pwa',
@@ -137,6 +156,15 @@ async function main() {
         case 'supabase':
           await addSupabase(process.cwd())
           break
+        case 'drizzle':
+          await addDrizzle(process.cwd())
+          break
+        case 'clerk':
+          await addClerk(process.cwd())
+          break
+        case 'better-auth':
+          await addBetterAuth(process.cwd())
+          break
         case 'pwa':
           await addPWA(process.cwd())
           break
@@ -153,7 +181,22 @@ async function main() {
 
     if (shouldInstall) {
       addSpinner.start(`Installing dependencies with ${packageManager}...`)
-      // TODO: Install dependencies
+
+      await new Promise<void>((resolve, reject) => {
+        const child = spawn(packageManager, ['install'], {
+          cwd: process.cwd(),
+          stdio: 'ignore',
+        })
+
+        child.on('close', (code) => {
+          if (code === 0) {
+            resolve()
+          } else {
+            reject(new Error(`Installation failed with code ${code}`))
+          }
+        })
+      })
+
       addSpinner.stop('✓ Dependencies installed')
     }
 
@@ -273,7 +316,63 @@ program
 
     // Add single feature without prompts
     console.log(chalk.blue(`Adding ${getFeatureName(feature as FeatureId)}...`))
-    // TODO: Implement single feature addition
+
+    try {
+      switch (feature) {
+        case 'ai-custom':
+          await addAI('custom', process.cwd())
+          break
+        case 'ai-vercel':
+          await addAI('vercel', process.cwd())
+          break
+        case 'supabase':
+          await addSupabase(process.cwd())
+          break
+        case 'drizzle':
+          await addDrizzle(process.cwd())
+          break
+        case 'clerk':
+          await addClerk(process.cwd())
+          break
+        case 'better-auth':
+          await addBetterAuth(process.cwd())
+          break
+        case 'pwa':
+          await addPWA(process.cwd())
+          break
+        case 'i18n':
+          await addI18n(process.cwd())
+          break
+        case 'testing':
+          await addTesting(process.cwd())
+          break
+      }
+
+      if (options.install !== false) {
+        console.log(chalk.blue('Installing dependencies...'))
+        const packageManager = await detectPackageManager().catch(() => 'npm')
+
+        await new Promise<void>((resolve, reject) => {
+          const child = spawn(packageManager, ['install'], {
+            cwd: process.cwd(),
+            stdio: 'inherit',
+          })
+
+          child.on('close', (code) => {
+            if (code === 0) {
+              resolve()
+            } else {
+              reject(new Error(`Installation failed with code ${code}`))
+            }
+          })
+        })
+      }
+
+      console.log(chalk.green(`✓ Successfully added ${getFeatureName(feature as FeatureId)}`))
+    } catch (error) {
+      console.error(chalk.red('Failed to add feature:'), error)
+      process.exit(1)
+    }
   })
 
 program

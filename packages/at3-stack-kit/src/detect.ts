@@ -4,7 +4,7 @@
  */
 
 import { detect as detectPackageManager } from 'detect-package-manager'
-import { existsSync, readFileSync } from 'fs-extra'
+import { existsSync, readdirSync, readFileSync } from 'fs-extra'
 import { join } from 'path'
 
 export type ProjectType =
@@ -19,10 +19,19 @@ export type ProjectType =
   | 'webpack'
   | 'unknown'
 
+export type AuthProvider = 'supabase' | 'clerk' | 'better-auth' | 'next-auth' | 'lucia' | 'none'
+
 export interface DependencyInfo {
   name: string
   version: string
   type: 'dependency' | 'devDependency' | 'peerDependency'
+  current?: string // Installed version
+  latest?: string // Latest available version
+}
+
+export interface TestingInfo {
+  unit: 'vitest' | 'jest' | 'none'
+  e2e: 'playwright' | 'cypress' | 'none'
 }
 
 export interface ProjectInfo {
@@ -45,6 +54,11 @@ export interface ProjectInfo {
   hasBiome: boolean
   hasEdgeRuntime: boolean
   hasVectorDB: boolean
+  // Extended detection
+  hasDrizzle: boolean
+  hasPrisma: boolean
+  authProvider: AuthProvider
+  testing: TestingInfo
   packageManager: 'npm' | 'pnpm' | 'yarn' | 'bun'
   dependencies: DependencyInfo[]
   configFiles: string[]
@@ -77,9 +91,11 @@ export async function detectProjectType(projectPath: string): Promise<ProjectTyp
       return 'ait3e'
     }
 
-    // Check for T3 stack
-    if (deps['@t3-oss/create-t3-app'] || (deps.next && deps['@trpc/server'] && deps.prisma)) {
-      return 't3'
+    // Check for T3 stack (Next.js + tRPC + Prisma/Drizzle)
+    if (deps.next && deps['@trpc/server']) {
+      if (deps.prisma || deps['@prisma/client'] || deps['drizzle-orm']) {
+        return 't3'
+      }
     }
 
     // Check for Next.js
@@ -135,7 +151,7 @@ export async function analyzeProject(projectPath: string): Promise<ProjectInfo> 
   }
 
   // Analyze dependencies with detailed structure
-  const dependencies = analyzeDependencies(packageJson)
+  const dependencies = await analyzeDependencies(packageJson, projectPath)
   const configFiles = findConfigFiles(projectPath)
 
   // Feature detection
@@ -144,33 +160,30 @@ export async function analyzeProject(projectPath: string): Promise<ProjectInfo> 
   const hasReact = hasDependency(dependencies, 'react')
   const hasVue = hasDependency(dependencies, 'vue')
   const hasTailwind = hasDependency(dependencies, 'tailwindcss')
-  const hasTRPC = dependencies.some((dep) => dep.name.includes('@trpc/'))
+  const hasTRPC = detectTRPC(dependencies)
   const hasEslint = hasDependency(dependencies, 'eslint')
   const hasPrettier = hasDependency(dependencies, 'prettier')
   const hasBiome = hasDependency(dependencies, '@biomejs/biome')
 
   // AT3-specific features
-  const hasAI =
-    hasDependency(dependencies, 'ai') ||
-    hasDependency(dependencies, '@ai-sdk/openai') ||
-    hasDependency(dependencies, '@ai-sdk/anthropic') ||
-    hasDependency(dependencies, '@ai-sdk/google')
-  const hasSupabase =
-    hasDependency(dependencies, '@supabase/supabase-js') ||
-    hasDependency(dependencies, '@supabase/ssr')
-  const hasEdgeRuntime =
-    existsSync(join(projectPath, 'middleware.ts')) ||
-    existsSync(join(projectPath, 'src/middleware.ts'))
+  const hasAI = detectAISupport(dependencies)
+  const hasSupabase = detectSupabase(dependencies, projectPath)
+  const hasEdgeRuntime = detectEdgeRuntime(projectPath)
   const hasVectorDB = hasSupabaseVectorConfig(projectPath)
-  const hasPWA = dependencies.some(
-    (dep) => dep.name.includes('workbox') || dep.name.includes('pwa')
-  )
-  const hasI18n = dependencies.some(
-    (dep) => dep.name.includes('next-intl') || dep.name.includes('i18n')
-  )
-  const hasVitest = hasDependency(dependencies, 'vitest')
-  const hasPlaywright =
-    hasDependency(dependencies, 'playwright') || hasDependency(dependencies, '@playwright/test')
+  const hasPWA = detectPWA(dependencies, projectPath)
+  const hasI18n = detectI18n(dependencies, projectPath)
+
+  // Database detection
+  const hasDrizzle = detectDrizzle(dependencies, projectPath)
+  const hasPrisma = detectPrisma(dependencies, projectPath)
+
+  // Auth detection
+  const authProvider = detectAuthProvider(dependencies, projectPath)
+
+  // Testing detection
+  const testing = detectTesting(dependencies)
+  const hasVitest = testing.unit === 'vitest'
+  const hasPlaywright = testing.e2e === 'playwright'
 
   return {
     path: projectPath,
@@ -192,6 +205,10 @@ export async function analyzeProject(projectPath: string): Promise<ProjectInfo> 
     hasBiome,
     hasEdgeRuntime,
     hasVectorDB,
+    hasDrizzle,
+    hasPrisma,
+    authProvider,
+    testing,
     packageManager,
     dependencies,
     configFiles,
@@ -199,42 +216,70 @@ export async function analyzeProject(projectPath: string): Promise<ProjectInfo> 
 }
 
 /**
- * Analyze dependencies with detailed structure
+ * Analyze dependencies with installed version info
  */
-function analyzeDependencies(packageJson: any): DependencyInfo[] {
+async function analyzeDependencies(
+  packageJson: any,
+  projectPath: string
+): Promise<DependencyInfo[]> {
   const deps: DependencyInfo[] = []
 
   // Production dependencies
   if (packageJson.dependencies) {
-    Object.entries(packageJson.dependencies).forEach(([name, version]) => {
-      deps.push({
+    for (const [name, version] of Object.entries(packageJson.dependencies)) {
+      const info: DependencyInfo = {
         name,
         version: version as string,
         type: 'dependency',
-      })
-    })
+      }
+
+      // Try to get installed version
+      try {
+        const installedPkgPath = join(projectPath, 'node_modules', name, 'package.json')
+        if (existsSync(installedPkgPath)) {
+          const installedPkg = JSON.parse(readFileSync(installedPkgPath, 'utf-8'))
+          info.current = installedPkg.version
+        }
+      } catch {
+        // Ignore
+      }
+
+      deps.push(info)
+    }
   }
 
   // Development dependencies
   if (packageJson.devDependencies) {
-    Object.entries(packageJson.devDependencies).forEach(([name, version]) => {
-      deps.push({
+    for (const [name, version] of Object.entries(packageJson.devDependencies)) {
+      const info: DependencyInfo = {
         name,
         version: version as string,
         type: 'devDependency',
-      })
-    })
+      }
+
+      try {
+        const installedPkgPath = join(projectPath, 'node_modules', name, 'package.json')
+        if (existsSync(installedPkgPath)) {
+          const installedPkg = JSON.parse(readFileSync(installedPkgPath, 'utf-8'))
+          info.current = installedPkg.version
+        }
+      } catch {
+        // Ignore
+      }
+
+      deps.push(info)
+    }
   }
 
   // Peer dependencies
   if (packageJson.peerDependencies) {
-    Object.entries(packageJson.peerDependencies).forEach(([name, version]) => {
+    for (const [name, version] of Object.entries(packageJson.peerDependencies)) {
       deps.push({
         name,
         version: version as string,
         type: 'peerDependency',
       })
-    })
+    }
   }
 
   return deps
@@ -250,11 +295,13 @@ function findConfigFiles(projectPath: string): string[] {
     // TypeScript
     'tsconfig.json',
     'tsconfig.build.json',
+    'tsconfig.test.json',
 
     // Next.js
     'next.config.js',
     'next.config.ts',
     'next.config.mjs',
+    'next-env.d.ts',
 
     // Tailwind
     'tailwind.config.js',
@@ -274,25 +321,44 @@ function findConfigFiles(projectPath: string): string[] {
     '.prettierrc.js',
     '.prettierrc.json',
     'biome.json',
+    'biome.jsonc',
 
     // Testing
     'vitest.config.ts',
     'vitest.config.js',
+    'vitest.config.mts',
     'jest.config.js',
     'jest.config.ts',
     'playwright.config.ts',
+    'cypress.config.js',
+    'cypress.config.ts',
 
     // Build tools
     'vite.config.ts',
     'vite.config.js',
     'webpack.config.js',
     'rollup.config.js',
+    'turbo.json',
+
+    // Database
+    'drizzle.config.ts',
+    'drizzle.config.js',
+    'prisma/schema.prisma',
+
+    // Environment
+    '.env',
+    '.env.local',
+    '.env.example',
+    '.env.development',
+    '.env.production',
 
     // Other
     '.gitignore',
-    '.env.example',
-    '.env.local',
     'README.md',
+    'package.json',
+    'pnpm-workspace.yaml',
+    'vercel.json',
+    'netlify.toml',
   ]
 
   commonConfigFiles.forEach((file) => {
@@ -300,6 +366,11 @@ function findConfigFiles(projectPath: string): string[] {
       configFiles.push(file)
     }
   })
+
+  // Check for Supabase config
+  if (existsSync(join(projectPath, 'supabase', 'config.toml'))) {
+    configFiles.push('supabase/config.toml')
+  }
 
   return configFiles
 }
@@ -319,28 +390,263 @@ function hasDependency(dependencies: DependencyInfo[], name: string): boolean {
 }
 
 /**
+ * Detect AI SDK support
+ */
+function detectAISupport(dependencies: DependencyInfo[]): boolean {
+  const aiDeps = [
+    'ai',
+    '@ai-sdk/openai',
+    '@ai-sdk/anthropic',
+    '@ai-sdk/google',
+    '@ai-sdk/azure',
+    '@ai-sdk/mistral',
+    '@ai-sdk/cohere',
+    'openai',
+    '@anthropic-ai/sdk',
+    '@google/generative-ai',
+    'langchain',
+    '@langchain/core',
+    'llamaindex',
+  ]
+
+  return aiDeps.some((dep) => hasDependency(dependencies, dep))
+}
+
+/**
+ * Detect Supabase usage
+ */
+function detectSupabase(dependencies: DependencyInfo[], projectPath: string): boolean {
+  const hasSupabaseDeps =
+    hasDependency(dependencies, '@supabase/supabase-js') ||
+    hasDependency(dependencies, '@supabase/ssr') ||
+    hasDependency(dependencies, '@supabase/auth-helpers-nextjs')
+
+  const hasSupabaseConfig = existsSync(join(projectPath, 'supabase', 'config.toml'))
+
+  return hasSupabaseDeps || hasSupabaseConfig
+}
+
+/**
+ * Detect Edge runtime usage
+ */
+function detectEdgeRuntime(projectPath: string): boolean {
+  const middlewarePaths = [
+    join(projectPath, 'middleware.ts'),
+    join(projectPath, 'middleware.js'),
+    join(projectPath, 'src/middleware.ts'),
+    join(projectPath, 'src/middleware.js'),
+  ]
+
+  if (middlewarePaths.some((p) => existsSync(p))) {
+    return true
+  }
+
+  // Check for edge runtime in API routes
+  const apiPaths = [
+    join(projectPath, 'app/api'),
+    join(projectPath, 'src/app/api'),
+    join(projectPath, 'pages/api'),
+  ]
+
+  for (const apiPath of apiPaths) {
+    if (existsSync(apiPath)) {
+      try {
+        const files = getAllFiles(apiPath, ['.ts', '.js'])
+        for (const file of files) {
+          const content = readFileSync(file, 'utf8')
+          if (content.includes("export const runtime = 'edge'")) {
+            return true
+          }
+        }
+      } catch {
+        // Ignore
+      }
+    }
+  }
+
+  return false
+}
+
+/**
  * Check for Supabase vector configuration
  */
 function hasSupabaseVectorConfig(projectPath: string): boolean {
-  // Check for Supabase migration files that might contain vector extensions
   const supabaseMigrationDir = join(projectPath, 'supabase', 'migrations')
-  if (existsSync(supabaseMigrationDir)) {
-    try {
-      const { readdirSync } = require('fs')
-      const migrationFiles = readdirSync(supabaseMigrationDir)
+  if (!existsSync(supabaseMigrationDir)) return false
 
-      return migrationFiles.some((file: string) => {
-        if (file.endsWith('.sql')) {
-          const content = readFileSync(join(supabaseMigrationDir, file), 'utf8')
-          return content.includes('vector') || content.includes('embedding')
-        }
-        return false
-      })
-    } catch (error) {
+  try {
+    const migrationFiles = readdirSync(supabaseMigrationDir)
+
+    return migrationFiles.some((file: string) => {
+      if (file.endsWith('.sql')) {
+        const content = readFileSync(join(supabaseMigrationDir, file), 'utf8')
+        return content.includes('vector') || content.includes('embedding') || content.includes('pgvector')
+      }
       return false
-    }
+    })
+  } catch {
+    return false
   }
-  return false
+}
+
+/**
+ * Detect Drizzle ORM
+ */
+function detectDrizzle(dependencies: DependencyInfo[], projectPath: string): boolean {
+  const hasDrizzleDeps =
+    hasDependency(dependencies, 'drizzle-orm') || hasDependency(dependencies, 'drizzle-kit')
+
+  const hasDrizzleConfig =
+    existsSync(join(projectPath, 'drizzle.config.ts')) ||
+    existsSync(join(projectPath, 'drizzle.config.js'))
+
+  return hasDrizzleDeps || hasDrizzleConfig
+}
+
+/**
+ * Detect Prisma ORM
+ */
+function detectPrisma(dependencies: DependencyInfo[], projectPath: string): boolean {
+  const hasPrismaDeps =
+    hasDependency(dependencies, 'prisma') || hasDependency(dependencies, '@prisma/client')
+
+  const hasPrismaSchema = existsSync(join(projectPath, 'prisma', 'schema.prisma'))
+
+  return hasPrismaDeps || hasPrismaSchema
+}
+
+/**
+ * Detect auth provider
+ */
+function detectAuthProvider(dependencies: DependencyInfo[], projectPath: string): AuthProvider {
+  // Supabase Auth
+  if (
+    hasDependency(dependencies, '@supabase/auth-helpers-nextjs') ||
+    hasDependency(dependencies, '@supabase/ssr')
+  ) {
+    const hasAuthConfig =
+      existsSync(join(projectPath, 'src/lib/supabase')) ||
+      existsSync(join(projectPath, 'lib/supabase'))
+    if (hasAuthConfig) return 'supabase'
+  }
+
+  // Clerk
+  if (
+    hasDependency(dependencies, '@clerk/nextjs') ||
+    hasDependency(dependencies, '@clerk/clerk-react')
+  ) {
+    return 'clerk'
+  }
+
+  // Better Auth
+  if (hasDependency(dependencies, 'better-auth')) {
+    return 'better-auth'
+  }
+
+  // NextAuth / Auth.js
+  if (hasDependency(dependencies, 'next-auth') || hasDependency(dependencies, '@auth/core')) {
+    return 'next-auth'
+  }
+
+  // Lucia
+  if (hasDependency(dependencies, 'lucia')) {
+    return 'lucia'
+  }
+
+  return 'none'
+}
+
+/**
+ * Detect tRPC
+ */
+function detectTRPC(dependencies: DependencyInfo[]): boolean {
+  return (
+    hasDependency(dependencies, '@trpc/server') ||
+    hasDependency(dependencies, '@trpc/client') ||
+    hasDependency(dependencies, '@trpc/react-query')
+  )
+}
+
+/**
+ * Detect PWA support
+ */
+function detectPWA(dependencies: DependencyInfo[], projectPath: string): boolean {
+  const hasPWADeps =
+    hasDependency(dependencies, '@ducanh2912/next-pwa') ||
+    hasDependency(dependencies, 'next-pwa') ||
+    hasDependency(dependencies, 'workbox-webpack-plugin')
+
+  const hasManifest = existsSync(join(projectPath, 'public', 'manifest.json'))
+  const hasServiceWorker =
+    existsSync(join(projectPath, 'public', 'sw.js')) ||
+    existsSync(join(projectPath, 'public', 'service-worker.js'))
+
+  return hasPWADeps || (hasManifest && hasServiceWorker)
+}
+
+/**
+ * Detect i18n support
+ */
+function detectI18n(dependencies: DependencyInfo[], projectPath: string): boolean {
+  const hasI18nDeps =
+    hasDependency(dependencies, 'next-intl') ||
+    hasDependency(dependencies, 'next-i18next') ||
+    hasDependency(dependencies, 'react-i18next') ||
+    hasDependency(dependencies, 'i18next')
+
+  const hasMessagesDir =
+    existsSync(join(projectPath, 'messages')) ||
+    existsSync(join(projectPath, 'locales')) ||
+    existsSync(join(projectPath, 'public/locales'))
+
+  return hasI18nDeps || hasMessagesDir
+}
+
+/**
+ * Detect testing setup
+ */
+function detectTesting(dependencies: DependencyInfo[]): TestingInfo {
+  // Unit testing
+  let unit: TestingInfo['unit'] = 'none'
+  if (hasDependency(dependencies, 'vitest')) {
+    unit = 'vitest'
+  } else if (hasDependency(dependencies, 'jest')) {
+    unit = 'jest'
+  }
+
+  // E2E testing
+  let e2e: TestingInfo['e2e'] = 'none'
+  if (hasDependency(dependencies, '@playwright/test') || hasDependency(dependencies, 'playwright')) {
+    e2e = 'playwright'
+  } else if (hasDependency(dependencies, 'cypress')) {
+    e2e = 'cypress'
+  }
+
+  return { unit, e2e }
+}
+
+/**
+ * Get all files in directory recursively
+ */
+function getAllFiles(dirPath: string, extensions: string[]): string[] {
+  const files: string[] = []
+
+  try {
+    const entries = readdirSync(dirPath, { withFileTypes: true })
+
+    for (const entry of entries) {
+      const fullPath = join(dirPath, entry.name)
+      if (entry.isDirectory()) {
+        files.push(...getAllFiles(fullPath, extensions))
+      } else if (extensions.some((ext) => entry.name.endsWith(ext))) {
+        files.push(fullPath)
+      }
+    }
+  } catch {
+    // Ignore errors
+  }
+
+  return files
 }
 
 /**
@@ -349,13 +655,14 @@ function hasSupabaseVectorConfig(projectPath: string): boolean {
 export function getMissingFeatures(info: ProjectInfo): string[] {
   const missing: string[] = []
 
-  if (!info.hasSupabase) missing.push('supabase')
+  if (!info.hasSupabase && !info.hasDrizzle && !info.hasPrisma) missing.push('database')
   if (!info.hasAI) missing.push('ai')
   if (!info.hasPWA) missing.push('pwa')
   if (!info.hasI18n) missing.push('i18n')
-  if (!info.hasVitest) missing.push('testing')
+  if (info.testing.unit === 'none') missing.push('testing')
   if (!info.hasTailwind) missing.push('tailwind')
   if (!info.hasTypeScript) missing.push('typescript')
+  if (info.authProvider === 'none') missing.push('auth')
 
   return missing
 }
@@ -399,11 +706,19 @@ export function getRecommendations(info: ProjectInfo): {
     })
   }
 
-  if (!info.hasSupabase) {
+  if (!info.hasSupabase && !info.hasDrizzle && !info.hasPrisma) {
+    recommendations.push({
+      priority: 'high' as const,
+      feature: 'database',
+      reason: 'A database solution is needed for most applications',
+    })
+  }
+
+  if (info.authProvider === 'none') {
     recommendations.push({
       priority: 'medium' as const,
-      feature: 'supabase',
-      reason: 'Supabase provides database, auth, and edge functions',
+      feature: 'auth',
+      reason: 'Authentication is essential for user management',
     })
   }
 
@@ -415,7 +730,7 @@ export function getRecommendations(info: ProjectInfo): {
     })
   }
 
-  if (!(info.hasVitest || info.hasPlaywright)) {
+  if (info.testing.unit === 'none') {
     recommendations.push({
       priority: 'low' as const,
       feature: 'testing',
@@ -423,5 +738,47 @@ export function getRecommendations(info: ProjectInfo): {
     })
   }
 
+  if (!info.hasBiome && (info.hasEslint || info.hasPrettier)) {
+    recommendations.push({
+      priority: 'low' as const,
+      feature: 'biome',
+      reason: 'Biome provides faster linting and formatting than ESLint/Prettier',
+    })
+  }
+
   return recommendations
+}
+
+/**
+ * Get a summary score for AT3 stack compatibility
+ */
+export function getAT3Score(info: ProjectInfo): {
+  score: number
+  maxScore: number
+  percentage: number
+  level: 'none' | 'basic' | 'intermediate' | 'advanced' | 'full'
+} {
+  let score = 0
+  const maxScore = 10
+
+  if (info.hasNextjs) score += 1
+  if (info.hasTypeScript) score += 1
+  if (info.hasTailwind) score += 1
+  if (info.hasSupabase || info.hasDrizzle || info.hasPrisma) score += 1
+  if (info.authProvider !== 'none') score += 1
+  if (info.hasAI) score += 2
+  if (info.hasEdgeRuntime) score += 1
+  if (info.testing.unit !== 'none') score += 1
+  if (info.hasBiome) score += 1
+
+  const percentage = Math.round((score / maxScore) * 100)
+
+  let level: 'none' | 'basic' | 'intermediate' | 'advanced' | 'full'
+  if (percentage === 0) level = 'none'
+  else if (percentage < 30) level = 'basic'
+  else if (percentage < 60) level = 'intermediate'
+  else if (percentage < 90) level = 'advanced'
+  else level = 'full'
+
+  return { score, maxScore, percentage, level }
 }

@@ -342,21 +342,35 @@ program
               message: "Choose a template:",
               initialValue: options.template,
               options: [
-                { value: "ait3e", label: "AIT3E Stack (AI + T3 + Edge)", hint: "Recommended" },
-                { value: "nextjs", label: "Next.js with AIT3E setup" },
-                { value: "react", label: "React with AI utilities" },
+                { value: "t3", label: "T3 Base", hint: "Classic T3 stack" },
+                { value: "t3-edge", label: "T3 + Edge", hint: "Supabase + Edge" },
+                { value: "t3-ai-vercel", label: "T3 + AI (Vercel SDK)", hint: "Recommended for AI" },
+                { value: "suggested", label: "AT3 Suggested", hint: "Full stack with all features" },
               ],
             }),
-          features: () =>
-            clack.multiselect({
-              message: "Select additional features:",
+          database: () =>
+            clack.select({
+              message: "Choose a database:",
               options: [
-                { value: "auth", label: "Authentication (Supabase Auth)" },
-                { value: "database", label: "Database setup (PostgreSQL)" },
-                { value: "vectors", label: "Vector database (Embeddings)" },
-                { value: "analytics", label: "Analytics (Vercel Analytics)" },
+                { value: "supabase", label: "Supabase (Managed)", hint: "Recommended" },
+                { value: "drizzle", label: "Drizzle ORM (Unmanaged)", hint: "Generic Postgres" },
+                { value: "none", label: "None" },
               ],
-              required: false,
+            }),
+          auth: () =>
+            clack.select({
+              message: "Choose authentication:",
+              options: [
+                { value: "supabase", label: "Supabase Auth", hint: "Requires Supabase DB" },
+                { value: "clerk", label: "Clerk", hint: "Hosted Auth" },
+                { value: "better-auth", label: "Better Auth", hint: "Self-hosted" },
+                { value: "none", label: "None" },
+              ],
+            }),
+          ai: () =>
+            clack.confirm({
+              message: "Include AI capabilities?",
+              initialValue: true,
             }),
         },
         {
@@ -370,8 +384,36 @@ program
       const s = clack.spinner();
       s.start(`Creating ${projectDetails.template} project: ${projectDetails.name}...`);
 
-      // TODO: Implementation for creating new projects
-      await new Promise((resolve) => setTimeout(resolve, 2000)); // Simulate project creation
+      // Use create-at3-app to scaffold the project
+      const { spawn } = await import("child_process");
+
+      await new Promise<void>((resolve, reject) => {
+        const args = [
+          "create-at3-app",
+          projectDetails.name as string,
+          "--template", projectDetails.template as string,
+          "--pm", "pnpm", // Default to pnpm for now
+          "--database", projectDetails.database as string,
+          "--auth", projectDetails.auth as string,
+        ];
+
+        if (projectDetails.ai) {
+          args.push("--ai");
+        }
+
+        const child = spawn("npx", args, {
+          stdio: "inherit",
+          shell: true
+        });
+
+        child.on("close", (code) => {
+          if (code === 0) {
+            resolve();
+          } else {
+            reject(new Error(`Project creation failed with code ${code}`));
+          }
+        });
+      });
 
       s.stop(`Project ${projectDetails.name} created successfully`);
 

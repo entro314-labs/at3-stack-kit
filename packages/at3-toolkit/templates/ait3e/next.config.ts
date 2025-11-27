@@ -11,11 +11,6 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: false,
   },
 
-  // ESLint configuration (disabled since we use Biome)
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-
   // Experimental features for AIT3E stack
   experimental: {
     // Performance optimizations

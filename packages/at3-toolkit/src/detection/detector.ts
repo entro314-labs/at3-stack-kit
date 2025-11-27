@@ -1,5 +1,5 @@
 import { detect as detectPackageManager } from "detect-package-manager";
-import { existsSync, readFileSync } from "fs";
+import { existsSync, readFileSync, readdirSync } from "fs";
 import { join, resolve } from "path";
 import type { DependencyInfo, ProjectInfo, ProjectType } from "../types/migration.js";
 import type { Logger } from "../utils/logger.js";
@@ -25,8 +25,8 @@ export class ProjectDetector {
     // Detect project type
     const projectType = this.detectProjectType(packageJson, projectPath);
 
-    // Analyze dependencies
-    const dependencies = this.analyzeDependencies(packageJson);
+    // Analyze dependencies with version info
+    const dependencies = await this.analyzeDependencies(packageJson, projectPath);
 
     // Find configuration files
     const configFiles = this.findConfigFiles(projectPath);
@@ -42,18 +42,19 @@ export class ProjectDetector {
     const hasBiome = this.hasDependency(dependencies, "@biomejs/biome");
 
     // AIT3E-specific features
-    const hasAISupport =
-      this.hasDependency(dependencies, "ai") ||
-      this.hasDependency(dependencies, "@ai-sdk/openai") ||
-      this.hasDependency(dependencies, "@ai-sdk/anthropic") ||
-      this.hasDependency(dependencies, "@ai-sdk/google");
-    const hasSupabase =
-      this.hasDependency(dependencies, "@supabase/supabase-js") ||
-      this.hasDependency(dependencies, "@supabase/ssr");
-    const hasEdgeRuntime =
-      existsSync(join(projectPath, "middleware.ts")) ||
-      existsSync(join(projectPath, "src/middleware.ts"));
+    const hasAISupport = this.detectAISupport(dependencies);
+    const hasSupabase = this.detectSupabase(dependencies, projectPath);
+    const hasEdgeRuntime = this.detectEdgeRuntime(projectPath);
     const hasVectorDB = this.hasSupabaseVectorConfig(projectPath);
+
+    // Additional feature detection
+    const hasDrizzle = this.detectDrizzle(dependencies, projectPath);
+    const hasPrisma = this.detectPrisma(dependencies, projectPath);
+    const authProvider = this.detectAuthProvider(dependencies, projectPath);
+    const hasTRPC = this.detectTRPC(dependencies);
+    const hasPWA = this.detectPWA(dependencies, projectPath);
+    const hasI18n = this.detectI18n(dependencies, projectPath);
+    const hasTesting = this.detectTesting(dependencies, projectPath);
 
     return {
       path: projectPath,
@@ -73,6 +74,14 @@ export class ProjectDetector {
       hasSupabase,
       hasEdgeRuntime,
       hasVectorDB,
+      // Extended detection results
+      hasDrizzle,
+      hasPrisma,
+      authProvider,
+      hasTRPC,
+      hasPWA,
+      hasI18n,
+      hasTesting,
     };
   }
 
@@ -89,6 +98,18 @@ export class ProjectDetector {
 
     if (hasAI && hasSupabase && hasNextJS && (hasTailwind || hasTypeScript)) {
       return "ait3e";
+    }
+
+    // Check for T3 stack variants
+    if (deps.next && deps["@trpc/server"]) {
+      // T3 with Prisma
+      if (deps.prisma || deps["@prisma/client"]) {
+        return "nextjs"; // Treat as Next.js with T3 patterns
+      }
+      // T3 with Drizzle
+      if (deps["drizzle-orm"]) {
+        return "nextjs";
+      }
     }
 
     // Check for Next.js
@@ -113,43 +134,59 @@ export class ProjectDetector {
     return "node";
   }
 
-  private analyzeDependencies(packageJson: any): DependencyInfo[] {
+  private async analyzeDependencies(packageJson: any, projectPath: string): Promise<DependencyInfo[]> {
     const deps: DependencyInfo[] = [];
 
     // Production dependencies
     if (packageJson.dependencies) {
-      Object.entries(packageJson.dependencies).forEach(([name, version]) => {
-        deps.push({
-          name,
-          version: version as string,
-          type: "dependency",
-        });
-      });
+      for (const [name, version] of Object.entries(packageJson.dependencies)) {
+        const depInfo = await this.getDependencyInfo(name, version as string, "dependency", projectPath);
+        deps.push(depInfo);
+      }
     }
 
     // Development dependencies
     if (packageJson.devDependencies) {
-      Object.entries(packageJson.devDependencies).forEach(([name, version]) => {
-        deps.push({
-          name,
-          version: version as string,
-          type: "devDependency",
-        });
-      });
+      for (const [name, version] of Object.entries(packageJson.devDependencies)) {
+        const depInfo = await this.getDependencyInfo(name, version as string, "devDependency", projectPath);
+        deps.push(depInfo);
+      }
     }
 
     // Peer dependencies
     if (packageJson.peerDependencies) {
-      Object.entries(packageJson.peerDependencies).forEach(([name, version]) => {
+      for (const [name, version] of Object.entries(packageJson.peerDependencies)) {
         deps.push({
           name,
           version: version as string,
           type: "peerDependency",
         });
-      });
+      }
     }
 
     return deps;
+  }
+
+  private async getDependencyInfo(
+    name: string,
+    version: string,
+    type: "dependency" | "devDependency" | "peerDependency",
+    projectPath: string
+  ): Promise<DependencyInfo> {
+    const info: DependencyInfo = { name, version, type };
+
+    // Try to get installed version from node_modules
+    try {
+      const installedPkgPath = join(projectPath, "node_modules", name, "package.json");
+      if (existsSync(installedPkgPath)) {
+        const installedPkg = JSON.parse(readFileSync(installedPkgPath, "utf8"));
+        info.current = installedPkg.version;
+      }
+    } catch {
+      // Ignore errors reading installed package
+    }
+
+    return info;
   }
 
   private findConfigFiles(projectPath: string): string[] {
@@ -159,11 +196,13 @@ export class ProjectDetector {
       // TypeScript
       "tsconfig.json",
       "tsconfig.build.json",
+      "tsconfig.test.json",
 
       // Next.js
       "next.config.js",
       "next.config.ts",
       "next.config.mjs",
+      "next-env.d.ts",
 
       // Tailwind
       "tailwind.config.js",
@@ -183,25 +222,58 @@ export class ProjectDetector {
       ".prettierrc.js",
       ".prettierrc.json",
       "biome.json",
+      "biome.jsonc",
 
       // Testing
       "vitest.config.ts",
       "vitest.config.js",
+      "vitest.config.mts",
       "jest.config.js",
       "jest.config.ts",
       "playwright.config.ts",
+      "cypress.config.js",
+      "cypress.config.ts",
 
       // Build tools
       "vite.config.ts",
       "vite.config.js",
       "webpack.config.js",
       "rollup.config.js",
+      "esbuild.config.js",
+      "turbo.json",
+
+      // Database
+      "drizzle.config.ts",
+      "drizzle.config.js",
+      "prisma/schema.prisma",
+
+      // i18n
+      "i18n.config.ts",
+      "i18n.config.js",
+
+      // Auth
+      "auth.config.ts",
+      "auth.ts",
+
+      // Environment
+      ".env",
+      ".env.local",
+      ".env.example",
+      ".env.development",
+      ".env.production",
 
       // Other
       ".gitignore",
-      ".env.example",
-      ".env.local",
+      ".nvmrc",
+      ".node-version",
+      "package.json",
+      "pnpm-workspace.yaml",
+      "lerna.json",
       "README.md",
+      "docker-compose.yml",
+      "Dockerfile",
+      "vercel.json",
+      "netlify.toml",
     ];
 
     commonConfigFiles.forEach((file) => {
@@ -209,6 +281,11 @@ export class ProjectDetector {
         configFiles.push(file);
       }
     });
+
+    // Check for Supabase config
+    if (existsSync(join(projectPath, "supabase", "config.toml"))) {
+      configFiles.push("supabase/config.toml");
+    }
 
     return configFiles;
   }
@@ -224,26 +301,248 @@ export class ProjectDetector {
     return dependencies.some((dep) => dep.name === name);
   }
 
-  private hasSupabaseVectorConfig(projectPath: string): boolean {
-    // Check for Supabase migration files that might contain vector extensions
-    const supabaseMigrationDir = join(projectPath, "supabase", "migrations");
-    if (existsSync(supabaseMigrationDir)) {
-      try {
-        const { readdirSync, readFileSync } = require("fs");
-        const migrationFiles = readdirSync(supabaseMigrationDir);
+  private detectAISupport(dependencies: DependencyInfo[]): boolean {
+    const aiDeps = [
+      "ai",
+      "@ai-sdk/openai",
+      "@ai-sdk/anthropic",
+      "@ai-sdk/google",
+      "@ai-sdk/azure",
+      "@ai-sdk/mistral",
+      "@ai-sdk/cohere",
+      "openai",
+      "@anthropic-ai/sdk",
+      "@google/generative-ai",
+      "langchain",
+      "@langchain/core",
+      "llamaindex",
+    ];
 
-        return migrationFiles.some((file: string) => {
-          if (file.endsWith(".sql")) {
-            const content = readFileSync(join(supabaseMigrationDir, file), "utf8");
-            return content.includes("vector") || content.includes("embedding");
+    return aiDeps.some((dep) => this.hasDependency(dependencies, dep));
+  }
+
+  private detectSupabase(dependencies: DependencyInfo[], projectPath: string): boolean {
+    const hasSupabaseDeps =
+      this.hasDependency(dependencies, "@supabase/supabase-js") ||
+      this.hasDependency(dependencies, "@supabase/ssr") ||
+      this.hasDependency(dependencies, "@supabase/auth-helpers-nextjs");
+
+    const hasSupabaseConfig = existsSync(join(projectPath, "supabase", "config.toml"));
+
+    return hasSupabaseDeps || hasSupabaseConfig;
+  }
+
+  private detectEdgeRuntime(projectPath: string): boolean {
+    // Check for middleware files
+    const middlewarePaths = [
+      join(projectPath, "middleware.ts"),
+      join(projectPath, "middleware.js"),
+      join(projectPath, "src/middleware.ts"),
+      join(projectPath, "src/middleware.js"),
+    ];
+
+    if (middlewarePaths.some((p) => existsSync(p))) {
+      return true;
+    }
+
+    // Check for edge runtime exports in API routes
+    const apiRoutes = [
+      join(projectPath, "app/api"),
+      join(projectPath, "src/app/api"),
+      join(projectPath, "pages/api"),
+    ];
+
+    for (const apiPath of apiRoutes) {
+      if (existsSync(apiPath)) {
+        try {
+          const files = this.getAllFiles(apiPath, [".ts", ".js"]);
+          for (const file of files) {
+            const content = readFileSync(file, "utf8");
+            if (content.includes("export const runtime = 'edge'")) {
+              return true;
+            }
           }
-          return false;
-        });
-      } catch (error) {
-        this.logger.debug("Could not check Supabase migrations for vector config");
-        return false;
+        } catch {
+          // Ignore errors reading files
+        }
       }
     }
+
     return false;
+  }
+
+  private hasSupabaseVectorConfig(projectPath: string): boolean {
+    const supabaseMigrationDir = join(projectPath, "supabase", "migrations");
+    if (!existsSync(supabaseMigrationDir)) return false;
+
+    try {
+      const migrationFiles = readdirSync(supabaseMigrationDir);
+
+      return migrationFiles.some((file: string) => {
+        if (file.endsWith(".sql")) {
+          const content = readFileSync(join(supabaseMigrationDir, file), "utf8");
+          return (
+            content.includes("vector") ||
+            content.includes("embedding") ||
+            content.includes("pgvector")
+          );
+        }
+        return false;
+      });
+    } catch {
+      this.logger.debug("Could not check Supabase migrations for vector config");
+      return false;
+    }
+  }
+
+  private detectDrizzle(dependencies: DependencyInfo[], projectPath: string): boolean {
+    const hasDrizzleDeps =
+      this.hasDependency(dependencies, "drizzle-orm") ||
+      this.hasDependency(dependencies, "drizzle-kit");
+
+    const hasDrizzleConfig =
+      existsSync(join(projectPath, "drizzle.config.ts")) ||
+      existsSync(join(projectPath, "drizzle.config.js"));
+
+    return hasDrizzleDeps || hasDrizzleConfig;
+  }
+
+  private detectPrisma(dependencies: DependencyInfo[], projectPath: string): boolean {
+    const hasPrismaDeps =
+      this.hasDependency(dependencies, "prisma") ||
+      this.hasDependency(dependencies, "@prisma/client");
+
+    const hasPrismaSchema = existsSync(join(projectPath, "prisma", "schema.prisma"));
+
+    return hasPrismaDeps || hasPrismaSchema;
+  }
+
+  private detectAuthProvider(
+    dependencies: DependencyInfo[],
+    projectPath: string
+  ): "supabase" | "clerk" | "better-auth" | "next-auth" | "lucia" | "none" {
+    // Supabase Auth
+    if (
+      this.hasDependency(dependencies, "@supabase/auth-helpers-nextjs") ||
+      this.hasDependency(dependencies, "@supabase/ssr")
+    ) {
+      // Check if actually using Supabase auth
+      const hasAuthConfig =
+        existsSync(join(projectPath, "src/lib/supabase")) ||
+        existsSync(join(projectPath, "lib/supabase"));
+      if (hasAuthConfig) return "supabase";
+    }
+
+    // Clerk
+    if (
+      this.hasDependency(dependencies, "@clerk/nextjs") ||
+      this.hasDependency(dependencies, "@clerk/clerk-react")
+    ) {
+      return "clerk";
+    }
+
+    // Better Auth
+    if (this.hasDependency(dependencies, "better-auth")) {
+      return "better-auth";
+    }
+
+    // NextAuth / Auth.js
+    if (
+      this.hasDependency(dependencies, "next-auth") ||
+      this.hasDependency(dependencies, "@auth/core")
+    ) {
+      return "next-auth";
+    }
+
+    // Lucia
+    if (this.hasDependency(dependencies, "lucia")) {
+      return "lucia";
+    }
+
+    return "none";
+  }
+
+  private detectTRPC(dependencies: DependencyInfo[]): boolean {
+    return (
+      this.hasDependency(dependencies, "@trpc/server") ||
+      this.hasDependency(dependencies, "@trpc/client") ||
+      this.hasDependency(dependencies, "@trpc/react-query")
+    );
+  }
+
+  private detectPWA(dependencies: DependencyInfo[], projectPath: string): boolean {
+    const hasPWADeps =
+      this.hasDependency(dependencies, "@ducanh2912/next-pwa") ||
+      this.hasDependency(dependencies, "next-pwa") ||
+      this.hasDependency(dependencies, "workbox-webpack-plugin");
+
+    const hasManifest = existsSync(join(projectPath, "public", "manifest.json"));
+    const hasServiceWorker =
+      existsSync(join(projectPath, "public", "sw.js")) ||
+      existsSync(join(projectPath, "public", "service-worker.js"));
+
+    return hasPWADeps || (hasManifest && hasServiceWorker);
+  }
+
+  private detectI18n(dependencies: DependencyInfo[], projectPath: string): boolean {
+    const hasI18nDeps =
+      this.hasDependency(dependencies, "next-intl") ||
+      this.hasDependency(dependencies, "next-i18next") ||
+      this.hasDependency(dependencies, "react-i18next") ||
+      this.hasDependency(dependencies, "i18next");
+
+    const hasMessagesDir =
+      existsSync(join(projectPath, "messages")) ||
+      existsSync(join(projectPath, "locales")) ||
+      existsSync(join(projectPath, "public/locales"));
+
+    return hasI18nDeps || hasMessagesDir;
+  }
+
+  private detectTesting(dependencies: DependencyInfo[], projectPath: string): {
+    unit: "vitest" | "jest" | "none";
+    e2e: "playwright" | "cypress" | "none";
+  } {
+    // Unit testing
+    let unit: "vitest" | "jest" | "none" = "none";
+    if (this.hasDependency(dependencies, "vitest")) {
+      unit = "vitest";
+    } else if (this.hasDependency(dependencies, "jest")) {
+      unit = "jest";
+    }
+
+    // E2E testing
+    let e2e: "playwright" | "cypress" | "none" = "none";
+    if (
+      this.hasDependency(dependencies, "@playwright/test") ||
+      this.hasDependency(dependencies, "playwright")
+    ) {
+      e2e = "playwright";
+    } else if (this.hasDependency(dependencies, "cypress")) {
+      e2e = "cypress";
+    }
+
+    return { unit, e2e };
+  }
+
+  private getAllFiles(dirPath: string, extensions: string[]): string[] {
+    const files: string[] = [];
+
+    try {
+      const entries = readdirSync(dirPath, { withFileTypes: true });
+
+      for (const entry of entries) {
+        const fullPath = join(dirPath, entry.name);
+        if (entry.isDirectory()) {
+          files.push(...this.getAllFiles(fullPath, extensions));
+        } else if (extensions.some((ext) => entry.name.endsWith(ext))) {
+          files.push(fullPath);
+        }
+      }
+    } catch {
+      // Ignore errors
+    }
+
+    return files;
   }
 }

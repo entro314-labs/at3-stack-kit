@@ -176,6 +176,7 @@ export function VercelChat({
                         default:
                           // Handle tool parts
                           if (part.type.startsWith('tool-')) {
+                            // biome-ignore lint/suspicious/noExplicitAny: Tool parts have dynamic structure from AI SDK
                             const toolPart = part as any
                             if (
                               toolPart.state === 'input-streaming' ||

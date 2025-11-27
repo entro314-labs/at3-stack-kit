@@ -1,6 +1,6 @@
 {
   "name": "@entro314labs/at3-stack-kit",
-  "version": "0.1.0-alpha.2",
+  "version": "1.0.0-alpha.1",
   "description": "Upgrade existing projects to AT3 Stack with intelligent migration",
   "keywords": [
     "at3",
@@ -79,7 +79,7 @@
     "@types/node": "^24.10.1",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3",
-    "vitest": "^4.0.13"
+    "vitest": "^4.0.14"
   },
   "engines": {
     "node": ">=22.x"

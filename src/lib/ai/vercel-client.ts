@@ -93,6 +93,7 @@ export async function streamAIText(
 
 export async function generateAIObject<_T>(
   prompt: string,
+  // biome-ignore lint/suspicious/noExplicitAny: Schema types vary by library (zod, yup, etc)
   schema: any,
   modelKey: AIModelKey = 'gpt-4o-mini',
   systemPrompt?: string

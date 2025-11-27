@@ -37,6 +37,7 @@ export function useInstallPrompt(): InstallPromptHook {
     }
 
     // Check if iOS
+    // biome-ignore lint/suspicious/noExplicitAny: MSStream is a legacy IE property not in TypeScript types
     const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream
     setIsIOS(isIOSDevice)
 

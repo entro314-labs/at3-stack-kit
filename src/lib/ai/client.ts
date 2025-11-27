@@ -1,3 +1,5 @@
+import { generateText } from 'ai'
+import { openai } from '@ai-sdk/openai'
 import {
   AI_ERRORS,
   AI_PROVIDERS,
@@ -24,6 +26,7 @@ export interface AICompletionOptions {
   temperature?: number
   maxTokens?: number
   stream?: boolean
+  // biome-ignore lint/suspicious/noExplicitAny: OpenAI function definitions have complex dynamic structure
   functions?: any[]
   functionCall?: 'auto' | 'none' | { name: string }
   timeout?: number
@@ -144,6 +147,7 @@ export class AIClient {
     }
 
     // Rate limiting check
+    // biome-ignore lint/style/noNonNullAssertion: provider has default value from DEFAULT_CONFIG
     if (!rateLimiter.isAllowed(config.provider!, config.maxTokens)) {
       throw new AIError(AI_ERRORS.RATE_LIMIT_EXCEEDED, 'Rate limit exceeded')
     }
@@ -267,9 +271,47 @@ export class AIClient {
     }
   }
 
-  private async vercelCompletion(_options: AICompletionOptions): Promise<AICompletionResponse> {
-    // Use Vercel AI SDK (would need to be installed)
-    throw new AIError(AI_ERRORS.MODEL_NOT_FOUND, 'Vercel AI provider not implemented yet')
+  private async vercelCompletion(options: AICompletionOptions): Promise<AICompletionResponse> {
+    try {
+      const { text, usage, finishReason } = await generateText({
+        model: openai(options.model || 'gpt-4-turbo'),
+        messages: options.messages.map((m) => ({
+          role: m.role as 'system' | 'user' | 'assistant',
+          content: m.content,
+        })),
+        ...(options.maxTokens && { maxOutputTokens: options.maxTokens }),
+        ...(options.temperature && { temperature: options.temperature }),
+      })
+
+      return {
+        id: `vercel-${Date.now()}`,
+        object: 'chat.completion',
+        created: Date.now(),
+        model: options.model || 'gpt-4-turbo',
+        choices: [
+          {
+            index: 0,
+            message: {
+              role: 'assistant',
+              content: text,
+            },
+            finish_reason: finishReason,
+          },
+        ],
+        usage: {
+          prompt_tokens: usage.inputTokens ?? 0,
+          completion_tokens: usage.outputTokens ?? 0,
+          total_tokens: (usage.inputTokens ?? 0) + (usage.outputTokens ?? 0),
+        },
+      }
+    } catch (error) {
+      throw new AIError(
+        AI_ERRORS.UNKNOWN,
+        error instanceof Error ? error.message : 'Vercel AI SDK error',
+        AI_PROVIDERS.VERCEL,
+        error instanceof Error ? error : undefined
+      )
+    }
   }
 
   private async googleCompletion(options: AICompletionOptions): Promise<AICompletionResponse> {
@@ -312,6 +354,7 @@ export class AIClient {
       id: `google-${Date.now()}`,
       object: 'chat.completion',
       created: Date.now(),
+      // biome-ignore lint/style/noNonNullAssertion: model is always provided in options
       model: options.model!,
       choices: [
         {

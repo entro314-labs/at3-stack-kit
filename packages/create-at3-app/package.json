@@ -1,6 +1,6 @@
 {
   "name": "@entro314labs/create-at3-app",
-  "version": "0.1.0-alpha.2",
+  "version": "1.0.0-alpha.1",
   "description": "Scaffold new AT3 Stack projects with AI, edge, and modern tooling",
   "keywords": [
     "at3",
@@ -80,7 +80,7 @@
     "ora": "^9.0.0",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3",
-    "vitest": "^4.0.13"
+    "vitest": "^4.0.14"
   },
   "engines": {
     "node": ">=22.x"

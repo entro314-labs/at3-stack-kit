@@ -30,6 +30,21 @@ export interface ProjectInfo {
   hasSupabase: boolean;
   hasEdgeRuntime: boolean;
   hasVectorDB: boolean;
+  // Extended detection fields
+  hasDrizzle?: boolean;
+  hasPrisma?: boolean;
+  authProvider?: AuthProvider;
+  hasTRPC?: boolean;
+  hasPWA?: boolean;
+  hasI18n?: boolean;
+  hasTesting?: TestingInfo;
+}
+
+export type AuthProvider = "supabase" | "clerk" | "better-auth" | "next-auth" | "lucia" | "none";
+
+export interface TestingInfo {
+  unit: "vitest" | "jest" | "none";
+  e2e: "playwright" | "cypress" | "none";
 }
 
 export type ProjectType =

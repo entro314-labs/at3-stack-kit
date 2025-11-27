@@ -129,7 +129,7 @@ async function addVercelAI(aiPath: string): Promise<void> {
  */
 
 import { anthropic } from '@ai-sdk/anthropic';
-import { google } from '@ai-sdk/google';  
+import { google } from '@ai-sdk/google';
 import { openai } from '@ai-sdk/openai';
 import { generateText, streamText } from 'ai';
 
@@ -266,10 +266,10 @@ async function updatePackageJson(projectPath: string, type: 'custom' | 'vercel')
   if (!packageJson.dependencies) packageJson.dependencies = {}
 
   if (type === 'vercel') {
-    packageJson.dependencies.ai = '^5.0.8'
-    packageJson.dependencies['@ai-sdk/openai'] = '^2.0.7'
-    packageJson.dependencies['@ai-sdk/anthropic'] = '^2.0.1'
-    packageJson.dependencies['@ai-sdk/google'] = '^2.0.3'
+    packageJson.dependencies.ai = '^5.0.104'
+    packageJson.dependencies['@ai-sdk/openai'] = '^2.0.74'
+    packageJson.dependencies['@ai-sdk/anthropic'] = '^2.0.50'
+    packageJson.dependencies['@ai-sdk/google'] = '^2.0.44'
   }
 
   await writeFile(packageJsonPath, JSON.stringify(packageJson, null, 2))

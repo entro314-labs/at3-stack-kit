@@ -9,7 +9,9 @@ export async function updateSession(request: NextRequest) {
   })
 
   const supabase = createServerClient<Database>(
+    // biome-ignore lint/style/noNonNullAssertion: env vars validated at startup
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    // biome-ignore lint/style/noNonNullAssertion: env vars validated at startup
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {

@@ -101,7 +101,9 @@ interface ChartTooltipContentProps extends React.ComponentProps<'div'> {
   payload?: Array<{
     color?: string
     name?: string
+    // biome-ignore lint/suspicious/noExplicitAny: Recharts payload types are dynamic
     value?: any
+    // biome-ignore lint/suspicious/noExplicitAny: Recharts payload types are dynamic
     payload?: any
     dataKey?: string
   }>
@@ -111,8 +113,10 @@ interface ChartTooltipContentProps extends React.ComponentProps<'div'> {
   indicator?: 'line' | 'dot' | 'dashed'
   nameKey?: string
   labelKey?: string
+  // biome-ignore lint/suspicious/noExplicitAny: Recharts formatter types are dynamic
   labelFormatter?: (label: any, payload: any) => React.ReactNode
   labelClassName?: string
+  // biome-ignore lint/suspicious/noExplicitAny: Recharts formatter types are dynamic
   formatter?: (value: any, name: any, entry: any, index: number) => React.ReactNode
   color?: string
 }
@@ -252,6 +256,7 @@ interface ChartLegendContentProps extends React.ComponentProps<'div'> {
     value?: string
     dataKey?: string
     color?: string
+    // biome-ignore lint/suspicious/noExplicitAny: Recharts payload types are dynamic
     payload?: any
   }>
   verticalAlign?: 'top' | 'bottom'
@@ -279,6 +284,7 @@ function ChartLegendContent({
         className
       )}
     >
+      {/* biome-ignore lint/suspicious/noExplicitAny: Recharts payload items have dynamic structure */}
       {payload.map((item: any) => {
         const key = `${nameKey || item.dataKey || 'value'}`
         const itemConfig = getPayloadConfigFromPayload(config, item, key)

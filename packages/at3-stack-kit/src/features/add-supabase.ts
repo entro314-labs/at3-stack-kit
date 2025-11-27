@@ -161,11 +161,11 @@ async function updatePackageJson(projectPath: string): Promise<void> {
   if (!packageJson.devDependencies) packageJson.devDependencies = {}
 
   // Add Supabase dependencies
-  packageJson.dependencies['@supabase/supabase-js'] = '^2.54.0'
-  packageJson.dependencies['@supabase/ssr'] = '^0.7.0-rc.2'
+  packageJson.dependencies['@supabase/supabase-js'] = '^2.46.0'
+  packageJson.dependencies['@supabase/ssr'] = '^0.5.1'
 
   // Add Supabase CLI as dev dependency
-  packageJson.devDependencies['supabase'] = '^2.33.9'
+  packageJson.devDependencies['supabase'] = '^1.207.9'
 
   await writeFile(packageJsonPath, JSON.stringify(packageJson, null, 2))
 }

@@ -120,6 +120,7 @@ function Carousel({
         canScrollNext,
       }}
     >
+      {/* biome-ignore lint/a11y/useSemanticElements: shadcn carousel uses role="region" for carousel semantics */}
       <div
         onKeyDownCapture={handleKeyDown}
         className={cn('relative', className)}
@@ -151,6 +152,7 @@ function CarouselItem({ className, ...props }: React.ComponentProps<'div'>) {
   const { orientation } = useCarousel()
 
   return (
+    // biome-ignore lint/a11y/useSemanticElements: shadcn carousel pattern
     <div
       role="group"
       aria-roledescription="slide"

@@ -1,0 +1,29 @@
+{
+  "name": "at3-app",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "next": "16.0.5",
+    "ai": "^5.0.14",
+    "@ai-sdk/openai": "^2.0.74",
+    "@ai-sdk/react": "^2.0.104"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "@types/node": "^24.10.1",
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.0.17",
+    "eslint": "^9.39.1",
+    "eslint-config-next": "16.0.5"
+  }
+}

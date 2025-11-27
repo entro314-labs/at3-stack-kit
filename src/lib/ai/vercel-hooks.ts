@@ -168,6 +168,7 @@ export function useAIObject<T>() {
 
   const generate = async (
     prompt: string,
+    // biome-ignore lint/suspicious/noExplicitAny: Schema types vary by library (zod, yup, etc)
     schema: any,
     model: AIModelKey = 'gpt-4o-mini',
     systemMessage?: string
@@ -204,18 +205,5 @@ export function useAIObject<T>() {
     generate,
     reset,
   }
-}
 
-// Hook for AI assistant with tools
-export function useAIAssistant(_assistantId: string) {
-  // Placeholder implementation - useAssistant not imported
-  return {
-    status: 'awaiting_message' as const,
-    messages: [],
-    input: '',
-    handleInputChange: () => {},
-    submitMessage: () => {},
-    error: null,
-    isLoading: false,
-  }
 }

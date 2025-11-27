@@ -110,7 +110,6 @@ export default defineConfig({
                 browser: "chromium",
               },
             ],
-            provider: "playwright",
             headless: true,
           },
           include: ["src/**/*.browser.{test,spec}.{js,ts,jsx,tsx}"],
