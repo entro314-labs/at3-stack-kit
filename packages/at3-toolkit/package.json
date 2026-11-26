@@ -93,7 +93,7 @@
     "detect-package-manager": "^3.0.2",
     "figures": "^6.1.0",
     "fs-extra": "^11.3.3",
-    "glob": "^13.0.3",
+    "glob": "^14.0.6",
     "gradient-string": "^3.0.0",
     "semver": "^7.7.4",
     "toml": "^3.0.0",
