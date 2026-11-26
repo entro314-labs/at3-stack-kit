@@ -12,10 +12,11 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import {
-  addLocaleToPathname,
   type Locale,
+  addLocaleToPathname,
+  getCanonicalPathname,
+  getLocalizedPathname,
   locales,
-  removeLocaleFromPathname,
 } from '@/lib/i18n/config'
 import { cn } from '@/lib/utils'
 
@@ -40,8 +41,9 @@ export function LanguageSwitcher({ className }: LanguageSwitcherProps) {
 
   const switchLanguage = (newLocale: Locale) => {
     const currentPath = pathname || '/'
-    const cleanPathname = removeLocaleFromPathname(currentPath)
-    const newPathname = addLocaleToPathname(cleanPathname, newLocale)
+    const canonicalPathname = getCanonicalPathname(currentPath)
+    const localizedPathname = getLocalizedPathname(canonicalPathname, newLocale)
+    const newPathname = addLocaleToPathname(localizedPathname, newLocale)
     router.push(newPathname)
   }
 
@@ -63,7 +65,7 @@ export function LanguageSwitcher({ className }: LanguageSwitcherProps) {
             <span className="mr-2">{languageFlags[lng]}</span>
             {languageNames[lng]}
             {locale === lng && (
-              <span className="ml-auto text-muted-foreground text-xs">Current</span>
+              <span className="text-muted-foreground ml-auto text-xs">Current</span>
             )}
           </DropdownMenuItem>
         ))}

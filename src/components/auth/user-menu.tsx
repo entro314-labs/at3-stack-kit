@@ -82,7 +82,7 @@ export function UserMenu({ user, className }: UserMenuProps) {
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="font-medium text-sm leading-none">{getUserDisplayName()}</p>
+            <p className="text-sm leading-none font-medium">{getUserDisplayName()}</p>
             <p className="text-muted-foreground text-xs leading-none">{user.email}</p>
           </div>
         </DropdownMenuLabel>

@@ -30,20 +30,20 @@ interface VercelChatProps {
 
 const AI_MODEL_OPTIONS: { value: AIModelKey; label: string; provider: string }[] = [
   // OpenAI
-  { value: 'gpt-4o', label: 'GPT-4o', provider: 'OpenAI' },
-  { value: 'gpt-4o-mini', label: 'GPT-4o Mini', provider: 'OpenAI' },
-  { value: 'gpt-4-turbo', label: 'GPT-4 Turbo', provider: 'OpenAI' },
-  { value: 'gpt-4', label: 'GPT-4', provider: 'OpenAI' },
+  { label: 'GPT-4o', provider: 'OpenAI', value: 'gpt-4o' },
+  { label: 'GPT-4o Mini', provider: 'OpenAI', value: 'gpt-4o-mini' },
+  { label: 'GPT-4 Turbo', provider: 'OpenAI', value: 'gpt-4-turbo' },
+  { label: 'GPT-4', provider: 'OpenAI', value: 'gpt-4' },
 
   // Anthropic
-  { value: 'claude-3-5-sonnet', label: 'Claude 3.5 Sonnet', provider: 'Anthropic' },
-  { value: 'claude-3-opus', label: 'Claude 3 Opus', provider: 'Anthropic' },
-  { value: 'claude-3-sonnet', label: 'Claude 3 Sonnet', provider: 'Anthropic' },
-  { value: 'claude-3-haiku', label: 'Claude 3 Haiku', provider: 'Anthropic' },
+  { label: 'Claude 3.5 Sonnet', provider: 'Anthropic', value: 'claude-3-5-sonnet' },
+  { label: 'Claude 3 Opus', provider: 'Anthropic', value: 'claude-3-opus' },
+  { label: 'Claude 3 Sonnet', provider: 'Anthropic', value: 'claude-3-sonnet' },
+  { label: 'Claude 3 Haiku', provider: 'Anthropic', value: 'claude-3-haiku' },
 
   // Google
-  { value: 'gemini-1.5-pro', label: 'Gemini 1.5 Pro', provider: 'Google' },
-  { value: 'gemini-1.5-flash', label: 'Gemini 1.5 Flash', provider: 'Google' },
+  { label: 'Gemini 1.5 Pro', provider: 'Google', value: 'gemini-1.5-pro' },
+  { label: 'Gemini 1.5 Flash', provider: 'Google', value: 'gemini-1.5-flash' },
 ]
 
 export function VercelChat({
@@ -60,10 +60,10 @@ export function VercelChat({
 
   const { messages, sendMessage, status, error, stop, setMessages } = useAIChat({
     model: selectedModel,
-    systemMessage,
     onError: (error) => {
       console.error('Chat error:', error)
     },
+    systemMessage,
   })
 
   const [input, setInput] = React.useState('')
@@ -92,7 +92,7 @@ export function VercelChat({
   const handleModelChange = (newModel: AIModelKey) => {
     setSelectedModel(newModel)
     // Optionally clear messages when changing models
-    // setMessages([]);
+    // SetMessages([]);
   }
 
   return (
@@ -116,7 +116,7 @@ export function VercelChat({
         {showSettings && showModelSelector && (
           <div className="border-t pt-2">
             <div className="flex items-center gap-2">
-              <span className="font-medium text-sm">Model:</span>
+              <span className="text-sm font-medium">Model:</span>
               <Select value={selectedModel} onValueChange={handleModelChange}>
                 <SelectTrigger className="w-[200px]">
                   <SelectValue />
@@ -126,7 +126,7 @@ export function VercelChat({
                     <SelectItem key={model.value} value={model.value}>
                       <div className="flex w-full items-center justify-between">
                         <span>{model.label}</span>
-                        <span className="ml-2 text-muted-foreground text-xs">{model.provider}</span>
+                        <span className="text-muted-foreground ml-2 text-xs">{model.provider}</span>
                       </div>
                     </SelectItem>
                   ))}
@@ -141,7 +141,7 @@ export function VercelChat({
         <ScrollArea ref={scrollAreaRef} className={cn('px-6', height)}>
           <div className="space-y-4 pb-4">
             {messages.length === 0 && (
-              <div className="flex h-32 items-center justify-center text-muted-foreground">
+              <div className="text-muted-foreground flex h-32 items-center justify-center">
                 <p>Start a conversation with the AI assistant</p>
               </div>
             )}
@@ -168,12 +168,13 @@ export function VercelChat({
                     message.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted'
                   )}
                 >
-                  <div className="whitespace-pre-wrap text-sm">
+                  <div className="text-sm whitespace-pre-wrap">
                     {message.parts.map((part, index) => {
                       switch (part.type) {
-                        case 'text':
+                        case 'text': {
                           return <span key={index}>{part.text}</span>
-                        default:
+                        }
+                        default: {
                           // Handle tool parts
                           if (part.type.startsWith('tool-')) {
                             // biome-ignore lint/suspicious/noExplicitAny: Tool parts have dynamic structure from AI SDK
@@ -213,6 +214,7 @@ export function VercelChat({
                             }
                           }
                           return <span key={index}>{JSON.stringify(part)}</span>
+                        }
                       }
                     })}
                   </div>
@@ -237,7 +239,7 @@ export function VercelChat({
                     </AvatarFallback>
                   </Avatar>
                 )}
-                <div className="rounded-lg bg-muted px-4 py-2">
+                <div className="bg-muted rounded-lg px-4 py-2">
                   <div className="flex items-center gap-2">
                     <Loader2 className="h-4 w-4 animate-spin" />
                     <span className="text-muted-foreground text-sm">AI is typing...</span>
@@ -275,7 +277,7 @@ export function VercelChat({
 
       {error && (
         <div className="px-6 pb-4">
-          <div className="rounded-md border border-destructive/20 bg-destructive/15 px-3 py-2">
+          <div className="border-destructive/20 bg-destructive/15 rounded-md border px-3 py-2">
             <p className="text-destructive text-sm">Error: {error.message}</p>
             <Button
               variant="ghost"

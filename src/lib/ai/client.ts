@@ -1,85 +1,27 @@
+import 'server-only'
 import { generateText } from 'ai'
 import { openai } from '@ai-sdk/openai'
 import {
-  AI_ERRORS,
-  AI_PROVIDERS,
   type AIError as AIErrorCode,
   type AIProvider,
+  AI_ERRORS,
+  AI_PROVIDERS,
   DEFAULT_CONFIG,
+  RATE_LIMITS,
 } from './config'
-
-// Base types
-export interface AIMessage {
-  role: 'system' | 'user' | 'assistant' | 'function'
-  content: string
-  name?: string
-  function_call?: {
-    name: string
-    arguments: string
-  }
-}
-
-export interface AICompletionOptions {
-  provider?: AIProvider
-  model?: string
-  messages: AIMessage[]
-  temperature?: number
-  maxTokens?: number
-  stream?: boolean
-  // biome-ignore lint/suspicious/noExplicitAny: OpenAI function definitions have complex dynamic structure
-  functions?: any[]
-  functionCall?: 'auto' | 'none' | { name: string }
-  timeout?: number
-  userId?: string
-}
-
-export interface AICompletionResponse {
-  id: string
-  object: string
-  created: number
-  model: string
-  choices: {
-    index: number
-    message: {
-      role: string
-      content: string
-      function_call?: {
-        name: string
-        arguments: string
-      }
-    }
-    finish_reason: string
-  }[]
-  usage: {
-    prompt_tokens: number
-    completion_tokens: number
-    total_tokens: number
-  }
-}
-
-export class AIError extends Error {
-  constructor(
-    public code: AIErrorCode,
-    message: string,
-    public provider?: AIProvider,
-    public cause?: Error
-  ) {
-    super(message)
-    this.name = 'AIError'
-  }
-}
+import { AIError, type AICompletionOptions, type AICompletionResponse } from './types'
 
 // Rate limiting utility
 class RateLimiter {
-  private requests: Map<string, number[]> = new Map()
-  private tokens: Map<string, number[]> = new Map()
+  private requests = new Map<string, number[]>()
+  private tokens = new Map<string, Array<{ at: number; count: number }>>()
 
   isAllowed(provider: AIProvider, tokensUsed = 0): boolean {
     const now = Date.now()
     const minute = 60 * 1000
 
     const key = provider
-    const providerLimits = require('./config').RATE_LIMITS[provider]
+    const providerLimits = RATE_LIMITS[provider]
 
     // Clean old requests
     const requests = this.requests.get(key) || []
@@ -88,7 +30,7 @@ class RateLimiter {
 
     // Clean old tokens
     const tokens = this.tokens.get(key) || []
-    const validTokens = tokens.filter((time) => now - time < minute)
+    const validTokens = tokens.filter((token) => now - token.at < minute)
     this.tokens.set(key, validTokens)
 
     // Check limits
@@ -96,7 +38,7 @@ class RateLimiter {
       return false
     }
 
-    const currentTokens = validTokens.reduce((sum, _) => sum + tokensUsed, 0)
+    const currentTokens = validTokens.reduce((sum, token) => sum + token.count, 0)
     if (currentTokens + tokensUsed > providerLimits.tokensPerMinute) {
       return false
     }
@@ -104,7 +46,7 @@ class RateLimiter {
     // Record this request
     validRequests.push(now)
     if (tokensUsed > 0) {
-      validTokens.push(tokensUsed)
+      validTokens.push({ at: now, count: tokensUsed })
     }
 
     this.requests.set(key, validRequests)
@@ -118,7 +60,7 @@ const rateLimiter = new RateLimiter()
 
 // Main AI client class
 export class AIClient {
-  private apiKeys: Map<AIProvider, string> = new Map()
+  private apiKeys = new Map<AIProvider, string>()
 
   constructor() {
     // Initialize API keys from environment variables
@@ -147,23 +89,28 @@ export class AIClient {
     }
 
     // Rate limiting check
-    // biome-ignore lint/style/noNonNullAssertion: provider has default value from DEFAULT_CONFIG
+    // Biome-ignore lint/style/noNonNullAssertion: provider has default value from DEFAULT_CONFIG
     if (!rateLimiter.isAllowed(config.provider!, config.maxTokens)) {
       throw new AIError(AI_ERRORS.RATE_LIMIT_EXCEEDED, 'Rate limit exceeded')
     }
 
     try {
       switch (config.provider) {
-        case AI_PROVIDERS.OPENAI:
+        case AI_PROVIDERS.OPENAI: {
           return await this.openaiCompletion(config)
-        case AI_PROVIDERS.ANTHROPIC:
+        }
+        case AI_PROVIDERS.ANTHROPIC: {
           return await this.anthropicCompletion(config)
-        case AI_PROVIDERS.VERCEL:
+        }
+        case AI_PROVIDERS.VERCEL: {
           return await this.vercelCompletion(config)
-        case AI_PROVIDERS.GOOGLE:
+        }
+        case AI_PROVIDERS.GOOGLE: {
           return await this.googleCompletion(config)
-        default:
+        }
+        default: {
           throw new AIError(AI_ERRORS.MODEL_NOT_FOUND, `Unsupported provider: ${config.provider}`)
+        }
       }
     } catch (error) {
       if (error instanceof AIError) {
@@ -182,11 +129,6 @@ export class AIClient {
     const apiKey = this.getApiKey(AI_PROVIDERS.OPENAI)
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
       body: JSON.stringify({
         model: options.model,
         messages: options.messages,
@@ -197,6 +139,11 @@ export class AIClient {
         function_call: options.functionCall,
         user: options.userId,
       }),
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      method: 'POST',
       signal: AbortSignal.timeout(options.timeout || DEFAULT_CONFIG.timeout),
     })
 
@@ -220,12 +167,6 @@ export class AIClient {
     const userMessages = options.messages.filter((m) => m.role !== 'system')
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'x-api-key': apiKey,
-        'Content-Type': 'application/json',
-        'anthropic-version': '2023-06-01',
-      },
       body: JSON.stringify({
         model: options.model,
         system: systemMessage?.content || '',
@@ -233,6 +174,12 @@ export class AIClient {
         max_tokens: options.maxTokens,
         temperature: options.temperature,
       }),
+      headers: {
+        'x-api-key': apiKey,
+        'Content-Type': 'application/json',
+        'anthropic-version': '2023-06-01',
+      },
+      method: 'POST',
       signal: AbortSignal.timeout(options.timeout || DEFAULT_CONFIG.timeout),
     })
 
@@ -249,10 +196,6 @@ export class AIClient {
 
     // Convert Anthropic format to OpenAI format
     return {
-      id: result.id,
-      object: 'chat.completion',
-      created: Date.now(),
-      model: result.model,
       choices: [
         {
           index: 0,
@@ -263,6 +206,10 @@ export class AIClient {
           finish_reason: result.stop_reason,
         },
       ],
+      created: Date.now(),
+      id: result.id,
+      model: result.model,
+      object: 'chat.completion',
       usage: {
         prompt_tokens: result.usage.input_tokens,
         completion_tokens: result.usage.output_tokens,
@@ -274,20 +221,16 @@ export class AIClient {
   private async vercelCompletion(options: AICompletionOptions): Promise<AICompletionResponse> {
     try {
       const { text, usage, finishReason } = await generateText({
-        model: openai(options.model || 'gpt-4-turbo'),
         messages: options.messages.map((m) => ({
           role: m.role as 'system' | 'user' | 'assistant',
           content: m.content,
         })),
+        model: openai(options.model || 'gpt-4-turbo'),
         ...(options.maxTokens && { maxOutputTokens: options.maxTokens }),
         ...(options.temperature && { temperature: options.temperature }),
       })
 
       return {
-        id: `vercel-${Date.now()}`,
-        object: 'chat.completion',
-        created: Date.now(),
-        model: options.model || 'gpt-4-turbo',
         choices: [
           {
             index: 0,
@@ -298,6 +241,10 @@ export class AIClient {
             finish_reason: finishReason,
           },
         ],
+        created: Date.now(),
+        id: `vercel-${Date.now()}`,
+        model: options.model || 'gpt-4-turbo',
+        object: 'chat.completion',
         usage: {
           prompt_tokens: usage.inputTokens ?? 0,
           completion_tokens: usage.outputTokens ?? 0,
@@ -320,10 +267,6 @@ export class AIClient {
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/${options.model}:generateContent?key=${apiKey}`,
       {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({
           contents: options.messages.map((msg) => ({
             role: msg.role === 'assistant' ? 'model' : 'user',
@@ -334,6 +277,10 @@ export class AIClient {
             maxOutputTokens: options.maxTokens,
           },
         }),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        method: 'POST',
         signal: AbortSignal.timeout(options.timeout || DEFAULT_CONFIG.timeout),
       }
     )
@@ -354,16 +301,16 @@ export class AIClient {
       id: `google-${Date.now()}`,
       object: 'chat.completion',
       created: Date.now(),
-      // biome-ignore lint/style/noNonNullAssertion: model is always provided in options
+      // Biome-ignore lint/style/noNonNullAssertion: model is always provided in options
       model: options.model!,
       choices: [
         {
+          finish_reason: result.candidates[0]?.finishReason?.toLowerCase() || 'stop',
           index: 0,
           message: {
             role: 'assistant',
             content: result.candidates[0]?.content?.parts[0]?.text || '',
           },
-          finish_reason: result.candidates[0]?.finishReason?.toLowerCase() || 'stop',
         },
       ],
       usage: {
@@ -376,44 +323,58 @@ export class AIClient {
 
   private mapOpenAIErrorToAIError(status: number): AIErrorCode {
     switch (status) {
-      case 401:
+      case 401: {
         return AI_ERRORS.INVALID_API_KEY
-      case 429:
+      }
+      case 429: {
         return AI_ERRORS.RATE_LIMIT_EXCEEDED
-      case 402:
+      }
+      case 402: {
         return AI_ERRORS.INSUFFICIENT_QUOTA
-      case 404:
+      }
+      case 404: {
         return AI_ERRORS.MODEL_NOT_FOUND
-      case 400:
+      }
+      case 400: {
         return AI_ERRORS.INVALID_REQUEST
-      default:
+      }
+      default: {
         return AI_ERRORS.UNKNOWN
+      }
     }
   }
 
   private mapAnthropicErrorToAIError(status: number): AIErrorCode {
     switch (status) {
-      case 401:
+      case 401: {
         return AI_ERRORS.INVALID_API_KEY
-      case 429:
+      }
+      case 429: {
         return AI_ERRORS.RATE_LIMIT_EXCEEDED
-      case 400:
+      }
+      case 400: {
         return AI_ERRORS.INVALID_REQUEST
-      default:
+      }
+      default: {
         return AI_ERRORS.UNKNOWN
+      }
     }
   }
 
   private mapGoogleErrorToAIError(status: number): AIErrorCode {
     switch (status) {
-      case 401:
+      case 401: {
         return AI_ERRORS.INVALID_API_KEY
-      case 429:
+      }
+      case 429: {
         return AI_ERRORS.RATE_LIMIT_EXCEEDED
-      case 400:
+      }
+      case 400: {
         return AI_ERRORS.INVALID_REQUEST
-      default:
+      }
+      default: {
         return AI_ERRORS.UNKNOWN
+      }
     }
   }
 }

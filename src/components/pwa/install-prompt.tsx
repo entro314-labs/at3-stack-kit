@@ -71,7 +71,7 @@ export function InstallPrompt({ className }: InstallPromptProps) {
           <ol className="list-inside list-decimal space-y-2 text-sm">
             {instructions.map((instruction, index) => (
               <li key={index} className="flex items-start gap-2">
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary font-medium text-primary-foreground text-xs">
+                <span className="bg-primary text-primary-foreground flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-medium">
                   {index + 1}
                 </span>
                 <span className="flex-1">{instruction}</span>
@@ -82,9 +82,9 @@ export function InstallPrompt({ className }: InstallPromptProps) {
             <div className="mt-4 rounded-md border border-blue-200 bg-blue-50 p-3 dark:border-blue-800 dark:bg-blue-950">
               <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400">
                 <Share className="h-4 w-4" />
-                <span className="font-medium text-sm">Look for the Share button</span>
+                <span className="text-sm font-medium">Look for the Share button</span>
               </div>
-              <p className="mt-1 text-blue-600 text-xs dark:text-blue-400">
+              <p className="mt-1 text-xs text-blue-600 dark:text-blue-400">
                 It's usually located at the bottom center of Safari
               </p>
             </div>
@@ -117,15 +117,15 @@ export function InstallPrompt({ className }: InstallPromptProps) {
       </CardHeader>
       <CardContent>
         <div className="space-y-3">
-          <div className="flex items-center gap-2 text-muted-foreground text-sm">
+          <div className="text-muted-foreground flex items-center gap-2 text-sm">
             <div className="h-2 w-2 rounded-full bg-green-500" />
             <span>Works offline</span>
           </div>
-          <div className="flex items-center gap-2 text-muted-foreground text-sm">
+          <div className="text-muted-foreground flex items-center gap-2 text-sm">
             <div className="h-2 w-2 rounded-full bg-green-500" />
             <span>Quick access from home screen</span>
           </div>
-          <div className="flex items-center gap-2 text-muted-foreground text-sm">
+          <div className="text-muted-foreground flex items-center gap-2 text-sm">
             <div className="h-2 w-2 rounded-full bg-green-500" />
             <span>Native app-like experience</span>
           </div>

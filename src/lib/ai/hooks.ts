@@ -1,8 +1,8 @@
 'use client'
 
 import { useCallback, useRef, useState } from 'react'
-import { type AICompletionOptions, type AICompletionResponse, AIError, aiClient } from './client'
-import { type AIProvider, DEFAULT_CONFIG } from './config'
+import { type AIError as AIErrorCode, type AIProvider, AI_ERRORS, DEFAULT_CONFIG } from './config'
+import { AIError, type AICompletionOptions, type AICompletionResponse } from './types'
 
 export interface UseAICompletionOptions {
   provider?: AIProvider
@@ -23,6 +23,45 @@ export interface UseAICompletionReturn {
   abort: () => void
 }
 
+async function requestCompletion(
+  options: AICompletionOptions,
+  signal?: AbortSignal
+): Promise<AICompletionResponse> {
+  const requestInit: RequestInit = {
+    body: JSON.stringify(options),
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    method: 'POST',
+  }
+
+  if (signal) {
+    requestInit.signal = signal
+  }
+
+  const response = await fetch('/api/ai/completion', requestInit)
+
+  if (!response.ok) {
+    const body = (await response.json().catch(() => null)) as
+      | { code?: string; error?: string; provider?: AIProvider }
+      | null
+
+    const errorCode = Object.values(AI_ERRORS).includes(body?.code as AIErrorCode)
+      ? (body?.code as AIErrorCode)
+      : AI_ERRORS.UNKNOWN
+
+    throw new AIError(errorCode, body?.error ?? 'AI completion failed.', body?.provider)
+  }
+
+  return (await response.json()) as AICompletionResponse
+}
+
+function toAIError(error: unknown): AIError {
+  return error instanceof AIError
+    ? error
+    : new AIError(AI_ERRORS.UNKNOWN, 'An unexpected error occurred.')
+}
+
 export function useAICompletion(options: UseAICompletionOptions = {}): UseAICompletionReturn {
   const [completion, setCompletion] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -39,42 +78,34 @@ export function useAICompletion(options: UseAICompletionOptions = {}): UseAIComp
       setError(null)
       setCompletion('')
 
-      // Create abort controller for this request
       abortControllerRef.current = new AbortController()
 
       try {
-        const messages = [
-          ...(options.systemMessage
-            ? [{ role: 'system' as const, content: options.systemMessage }]
-            : []),
-          { role: 'user' as const, content: prompt },
-        ]
+        const response = await requestCompletion(
+          {
+            maxTokens: options.maxTokens ?? DEFAULT_CONFIG.maxTokens,
+            messages: [
+              ...(options.systemMessage
+                ? [{ content: options.systemMessage, role: 'system' as const }]
+                : []),
+              { content: prompt, role: 'user' as const },
+            ],
+            model: options.model ?? DEFAULT_CONFIG.model,
+            provider: options.provider ?? DEFAULT_CONFIG.provider,
+            temperature: options.temperature ?? DEFAULT_CONFIG.temperature,
+            timeout: DEFAULT_CONFIG.timeout,
+          },
+          abortControllerRef.current.signal
+        )
 
-        const completionOptions: AICompletionOptions = {
-          provider: options.provider || DEFAULT_CONFIG.provider,
-          model: options.model || DEFAULT_CONFIG.model,
-          temperature: options.temperature || DEFAULT_CONFIG.temperature,
-          maxTokens: options.maxTokens || DEFAULT_CONFIG.maxTokens,
-          messages,
-          timeout: DEFAULT_CONFIG.timeout,
-        }
-
-        const response = await aiClient.completion(completionOptions)
-
-        if (abortControllerRef.current?.signal.aborted) {
-          return
-        }
-
-        const content = response.choices[0]?.message?.content || ''
-        setCompletion(content)
+        setCompletion(response.choices[0]?.message?.content ?? '')
         options.onSuccess?.(response)
-      } catch (err) {
+      } catch (error) {
         if (abortControllerRef.current?.signal.aborted) {
           return
         }
 
-        const aiError =
-          err instanceof AIError ? err : new AIError('unknown', 'An unexpected error occurred')
+        const aiError = toAIError(error)
         setError(aiError)
         options.onError?.(aiError)
       } finally {
@@ -102,12 +133,12 @@ export function useAICompletion(options: UseAICompletionOptions = {}): UseAIComp
   }, [])
 
   return {
+    abort,
     completion,
-    isLoading,
     error,
     generate,
+    isLoading,
     reset,
-    abort,
   }
 }
 
@@ -139,18 +170,18 @@ export interface UseChatReturn {
 
 export function useChat(options: UseChatOptions = {}): UseChatReturn {
   const [messages, setMessages] = useState<ChatMessage[]>(() => {
-    const systemMessage = options.systemMessage
-    if (systemMessage) {
-      return [
-        {
-          id: 'system',
-          role: 'system' as const,
-          content: systemMessage,
-          timestamp: new Date(),
-        },
-      ]
+    if (!options.systemMessage) {
+      return []
     }
-    return []
+
+    return [
+      {
+        content: options.systemMessage,
+        id: 'system',
+        role: 'system',
+        timestamp: new Date(),
+      },
+    ]
   })
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<AIError | null>(null)
@@ -163,60 +194,52 @@ export function useChat(options: UseChatOptions = {}): UseChatReturn {
       }
 
       const userMessage: ChatMessage = {
+        content,
         id: `user-${Date.now()}`,
         role: 'user',
-        content,
         timestamp: new Date(),
       }
+      const nextMessages = [...messages, userMessage]
 
-      setMessages((prev) => [...prev, userMessage])
+      setMessages(nextMessages)
       setIsLoading(true)
       setError(null)
-
-      // Create abort controller for this request
       abortControllerRef.current = new AbortController()
 
       try {
-        const completionOptions: AICompletionOptions = {
-          provider: options.provider || DEFAULT_CONFIG.provider,
-          model: options.model || DEFAULT_CONFIG.model,
-          temperature: options.temperature || DEFAULT_CONFIG.temperature,
-          maxTokens: options.maxTokens || DEFAULT_CONFIG.maxTokens,
-          messages: [...messages, userMessage].map((msg) => ({
-            role: msg.role,
-            content: msg.content,
-          })),
-          timeout: DEFAULT_CONFIG.timeout,
-        }
+        const response = await requestCompletion(
+          {
+            maxTokens: options.maxTokens ?? DEFAULT_CONFIG.maxTokens,
+            messages: nextMessages.map((message) => ({
+              content: message.content,
+              role: message.role,
+            })),
+            model: options.model ?? DEFAULT_CONFIG.model,
+            provider: options.provider ?? DEFAULT_CONFIG.provider,
+            temperature: options.temperature ?? DEFAULT_CONFIG.temperature,
+            timeout: DEFAULT_CONFIG.timeout,
+          },
+          abortControllerRef.current.signal
+        )
 
-        const response = await aiClient.completion(completionOptions)
-
-        if (abortControllerRef.current?.signal.aborted) {
-          return
-        }
-
-        const assistantContent = response.choices[0]?.message?.content || ''
         const assistantMessage: ChatMessage = {
+          content: response.choices[0]?.message?.content ?? '',
           id: `assistant-${Date.now()}`,
           role: 'assistant',
-          content: assistantContent,
           timestamp: new Date(),
         }
 
-        setMessages((prev) => [...prev, assistantMessage])
+        setMessages((previous) => [...previous, assistantMessage])
         options.onMessage?.(assistantMessage)
-      } catch (err) {
+      } catch (error) {
         if (abortControllerRef.current?.signal.aborted) {
           return
         }
 
-        const aiError =
-          err instanceof AIError ? err : new AIError('unknown', 'An unexpected error occurred')
+        const aiError = toAIError(error)
         setError(aiError)
         options.onError?.(aiError)
-
-        // Remove the user message if there was an error
-        setMessages((prev) => prev.slice(0, -1))
+        setMessages((previous) => previous.slice(0, -1))
       } finally {
         if (!abortControllerRef.current?.signal.aborted) {
           setIsLoading(false)
@@ -228,19 +251,18 @@ export function useChat(options: UseChatOptions = {}): UseChatReturn {
   )
 
   const clearMessages = useCallback(() => {
-    const systemMessage = options.systemMessage
-    if (systemMessage) {
-      setMessages([
-        {
-          id: 'system',
-          role: 'system',
-          content: systemMessage,
-          timestamp: new Date(),
-        },
-      ])
-    } else {
-      setMessages([])
-    }
+    setMessages(
+      options.systemMessage
+        ? [
+            {
+              content: options.systemMessage,
+              id: 'system',
+              role: 'system',
+              timestamp: new Date(),
+            },
+          ]
+        : []
+    )
     setError(null)
     abortControllerRef.current?.abort()
     abortControllerRef.current = null
@@ -254,16 +276,15 @@ export function useChat(options: UseChatOptions = {}): UseChatReturn {
   }, [])
 
   return {
-    messages: messages.filter((m) => m.role !== 'system'), // Don't expose system messages
-    isLoading,
-    error,
-    sendMessage,
-    clearMessages,
     abort,
+    clearMessages,
+    error,
+    isLoading,
+    messages: messages.filter((message) => message.role !== 'system'),
+    sendMessage,
   }
 }
 
-// Utility hook for AI-powered text processing
 export interface UseAIProcessorOptions {
   provider?: AIProvider
   model?: string
@@ -280,23 +301,20 @@ export function useAIProcessor(options: UseAIProcessorOptions = {}) {
       setError(null)
 
       try {
-        const messages = [
-          ...(systemMessage ? [{ role: 'system' as const, content: systemMessage }] : []),
-          { role: 'user' as const, content: `${instruction}\n\nText: ${text}` },
-        ]
-
-        const response = await aiClient.completion({
-          provider: options.provider || DEFAULT_CONFIG.provider,
-          model: options.model || DEFAULT_CONFIG.model,
-          temperature: options.temperature || DEFAULT_CONFIG.temperature,
+        const response = await requestCompletion({
           maxTokens: DEFAULT_CONFIG.maxTokens,
-          messages,
+          messages: [
+            ...(systemMessage ? [{ content: systemMessage, role: 'system' as const }] : []),
+            { content: `${instruction}\n\nText: ${text}`, role: 'user' as const },
+          ],
+          model: options.model ?? DEFAULT_CONFIG.model,
+          provider: options.provider ?? DEFAULT_CONFIG.provider,
+          temperature: options.temperature ?? DEFAULT_CONFIG.temperature,
         })
 
-        return response.choices[0]?.message?.content || ''
-      } catch (err) {
-        const aiError =
-          err instanceof AIError ? err : new AIError('unknown', 'An unexpected error occurred')
+        return response.choices[0]?.message?.content ?? ''
+      } catch (error) {
+        const aiError = toAIError(error)
         setError(aiError)
         throw aiError
       } finally {
@@ -307,8 +325,8 @@ export function useAIProcessor(options: UseAIProcessorOptions = {}) {
   )
 
   return {
-    process,
-    isProcessing,
     error,
+    isProcessing,
+    process,
   }
 }

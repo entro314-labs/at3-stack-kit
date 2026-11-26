@@ -1,12 +1,14 @@
 import { createBrowserClient } from '@supabase/ssr'
 
 import type { Database } from '@/types/database'
+import { getSupabasePublicConfig } from './config'
 
 export function createClient() {
-  return createBrowserClient<Database>(
-    // biome-ignore lint/style/noNonNullAssertion: env vars validated at startup
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    // biome-ignore lint/style/noNonNullAssertion: env vars validated at startup
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
+  const supabaseConfig = getSupabasePublicConfig()
+
+  if (!supabaseConfig) {
+    throw new Error('Missing or invalid Supabase environment variables')
+  }
+
+  return createBrowserClient<Database>(supabaseConfig.url, supabaseConfig.anonKey)
 }

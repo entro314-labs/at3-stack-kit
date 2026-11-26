@@ -1,16 +1,43 @@
 import { createServerClient } from '@supabase/ssr'
 import { type NextRequest, NextResponse } from 'next/server'
+import { getSupabasePublicConfig } from '@/lib/supabase/config'
+
+const LOCALE_PREFIX = /^\/(en|es)(?=\/|$)/
+const PROTECTED_ROUTES = ['/dashboard', '/profile', '/settings', '/panel', '/perfil', '/configuracion']
+const AUTH_ROUTES = ['/auth/sign-in', '/auth/sign-up']
+
+function stripLocalePrefix(pathname: string) {
+  const withoutLocale = pathname.replace(LOCALE_PREFIX, '')
+  return withoutLocale.length > 0 ? withoutLocale : '/'
+}
 
 export async function updateSession(request: NextRequest) {
+  const normalizedPathname = stripLocalePrefix(request.nextUrl.pathname)
+  const isProtectedRoute = PROTECTED_ROUTES.some((route) => normalizedPathname.startsWith(route))
+  const isAuthRoute = AUTH_ROUTES.some((route) => normalizedPathname.startsWith(route))
+
+  const supabaseConfig = getSupabasePublicConfig()
+
+  if (!supabaseConfig) {
+    if (isProtectedRoute) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/auth/sign-in'
+      url.searchParams.set('redirectTo', `${request.nextUrl.pathname}${request.nextUrl.search}`)
+      return NextResponse.redirect(url)
+    }
+
+    return NextResponse.next({
+      request,
+    })
+  }
+
   let supabaseResponse = NextResponse.next({
     request,
   })
 
   const supabase = createServerClient(
-    // biome-ignore lint/style/noNonNullAssertion: env vars validated at startup
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    // biome-ignore lint/style/noNonNullAssertion: env vars validated at startup
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    supabaseConfig.url,
+    supabaseConfig.anonKey,
     {
       cookies: {
         getAll() {
@@ -31,24 +58,22 @@ export async function updateSession(request: NextRequest) {
     }
   )
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  let user = null
 
-  // Define protected routes that require authentication
-  const protectedRoutes = ['/dashboard', '/profile', '/settings']
-  const authRoutes = ['/auth/sign-in', '/auth/sign-up', '/auth/reset-password']
-
-  const isProtectedRoute = protectedRoutes.some((route) =>
-    request.nextUrl.pathname.startsWith(route)
-  )
-  const isAuthRoute = authRoutes.some((route) => request.nextUrl.pathname.startsWith(route))
+  try {
+    const {
+      data: { user: resolvedUser },
+    } = await supabase.auth.getUser()
+    user = resolvedUser
+  } catch {
+    user = null
+  }
 
   // Redirect unauthenticated users away from protected routes
   if (isProtectedRoute && !user) {
     const url = request.nextUrl.clone()
     url.pathname = '/auth/sign-in'
-    url.searchParams.set('redirectTo', request.nextUrl.pathname)
+    url.searchParams.set('redirectTo', `${request.nextUrl.pathname}${request.nextUrl.search}`)
     return NextResponse.redirect(url)
   }
 

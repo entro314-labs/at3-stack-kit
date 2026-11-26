@@ -4,12 +4,29 @@ import createIntlMiddleware from '@/lib/i18n/middleware'
 
 const intlMiddleware = createIntlMiddleware
 
-export async function middleware(request: NextRequest) {
+function isRedirectResponse(response: NextResponse | null | undefined) {
+  return Boolean(response?.headers.get('location'))
+}
+
+function mergeResponse(source: NextResponse, target: NextResponse) {
+  for (const [name, value] of source.headers.entries()) {
+    if (name.toLowerCase() === 'set-cookie') {
+      continue
+    }
+    target.headers.set(name, value)
+  }
+
+  for (const cookie of source.cookies.getAll()) {
+    target.cookies.set(cookie)
+  }
+}
+
+export async function proxy(request: NextRequest) {
   // Handle internationalization first
   const intlResponse = intlMiddleware(request)
 
   // If intl middleware wants to redirect, return that response
-  if (intlResponse?.headers.get('location')) {
+  if (isRedirectResponse(intlResponse)) {
     return intlResponse
   }
 
@@ -17,12 +34,16 @@ export async function middleware(request: NextRequest) {
   const authResponse = await updateSession(request)
 
   // If auth middleware wants to redirect, return that response
-  if (authResponse?.headers.get('location')) {
+  if (isRedirectResponse(authResponse)) {
     return authResponse
   }
 
-  // Return the intl response or continue with the request
-  return intlResponse || NextResponse.next()
+  if (intlResponse && authResponse) {
+    mergeResponse(intlResponse, authResponse)
+    return authResponse
+  }
+
+  return authResponse || intlResponse || NextResponse.next()
 }
 
 export const config = {
@@ -35,6 +56,6 @@ export const config = {
      * - api routes (except auth callback)
      * - public folder
      */
-    '/((?!_next/static|_next/image|favicon.ico|api(?!/auth)|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|api(?!/auth)|.*\\..*).*)',
   ],
 }

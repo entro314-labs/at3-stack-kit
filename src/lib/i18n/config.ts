@@ -1,4 +1,4 @@
-import { notFound } from 'next/navigation'
+import { hasLocale } from 'next-intl'
 import { getRequestConfig } from 'next-intl/server'
 
 // Can be imported from a shared config
@@ -6,19 +6,43 @@ export const locales = ['en', 'es'] as const
 export const defaultLocale = 'en' as const
 
 export type Locale = (typeof locales)[number]
+export type PathnameLocaleMap = {
+  [key in Locale]: string
+}
 
-export default getRequestConfig(async ({ locale }) => {
-  // Validate that the incoming `locale` parameter is valid
-  const validLocale = locale as Locale
-  if (!locales.includes(validLocale)) {
-    notFound()
-  }
+export const localizedPathnames = {
+  '/': '/',
+  '/about': {
+    en: '/about',
+    es: '/acerca',
+  },
+  '/blog': {
+    en: '/blog',
+    es: '/blog',
+  },
+  '/contact': {
+    en: '/contact',
+    es: '/contacto',
+  },
+  '/dashboard': {
+    en: '/dashboard',
+    es: '/panel',
+  },
+  '/profile': {
+    en: '/profile',
+    es: '/perfil',
+  },
+  '/settings': {
+    en: '/settings',
+    es: '/configuracion',
+  },
+} as const satisfies Record<string, string | PathnameLocaleMap>
+
+export default getRequestConfig(async ({ requestLocale }) => {
+  const requestedLocale = await requestLocale
+  const validLocale = hasLocale(locales, requestedLocale) ? requestedLocale : defaultLocale
 
   return {
-    locale: validLocale,
-    messages: (await import(`../../../messages/${validLocale}.json`)).default,
-    timeZone: 'UTC',
-    now: new Date(),
     formats: {
       dateTime: {
         short: {
@@ -58,6 +82,10 @@ export default getRequestConfig(async ({ locale }) => {
         },
       },
     },
+    locale: validLocale,
+    messages: (await import(`../../../messages/${validLocale}.json`)).default,
+    now: new Date(),
+    timeZone: 'UTC',
   }
 })
 
@@ -75,21 +103,61 @@ export function getLocaleFromPathname(pathname: string): Locale {
 
 // Helper function to remove locale from pathname
 export function removeLocaleFromPathname(pathname: string): string {
-  const locale = getLocaleFromPathname(pathname)
+  const normalizedPathname = pathname.startsWith('/') ? pathname : `/${pathname}`
+  const segments = normalizedPathname.split('/')
+  const potentialLocale = segments[1]
 
-  if (locale === defaultLocale) {
-    return pathname
+  if (!locales.includes(potentialLocale as Locale)) {
+    return normalizedPathname
   }
 
-  return pathname.replace(`/${locale}`, '') || '/'
+  const pathWithoutLocale = `/${segments.slice(2).join('/')}`.replace(/\/+/g, '/')
+  return pathWithoutLocale === '/' ? '/' : pathWithoutLocale.replace(/\/$/, '') || '/'
 }
 
 // Helper function to add locale to pathname
 export function addLocaleToPathname(pathname: string, locale: Locale): string {
+  const normalizedPathname = pathname.startsWith('/') ? pathname : `/${pathname}`
+
   if (locale === defaultLocale) {
-    return pathname
+    return normalizedPathname
   }
 
-  const cleanPathname = removeLocaleFromPathname(pathname)
+  const cleanPathname = removeLocaleFromPathname(normalizedPathname)
   return `/${locale}${cleanPathname}`
+}
+
+export function getCanonicalPathname(pathname: string): string {
+  const cleanPathname = removeLocaleFromPathname(pathname)
+
+  for (const [canonicalPathname, localizedValue] of Object.entries(localizedPathnames)) {
+    if (typeof localizedValue === 'string') {
+      if (localizedValue === cleanPathname) {
+        return canonicalPathname
+      }
+      continue
+    }
+
+    const localizedMatches = Object.values(localizedValue) as string[]
+    if (localizedMatches.includes(cleanPathname)) {
+      return canonicalPathname
+    }
+  }
+
+  return cleanPathname
+}
+
+export function getLocalizedPathname(pathname: string, locale: Locale): string {
+  const canonicalPathname = getCanonicalPathname(pathname)
+  const localizedValue = localizedPathnames[canonicalPathname as keyof typeof localizedPathnames]
+
+  if (!localizedValue) {
+    return canonicalPathname
+  }
+
+  if (typeof localizedValue === 'string') {
+    return localizedValue
+  }
+
+  return localizedValue[locale]
 }

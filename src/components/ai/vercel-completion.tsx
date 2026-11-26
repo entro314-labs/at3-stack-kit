@@ -30,18 +30,18 @@ interface VercelCompletionProps {
 
 const AI_MODEL_OPTIONS: { value: AIModelKey; label: string; provider: string }[] = [
   // OpenAI
-  { value: 'gpt-4o', label: 'GPT-4o', provider: 'OpenAI' },
-  { value: 'gpt-4o-mini', label: 'GPT-4o Mini', provider: 'OpenAI' },
-  { value: 'gpt-4-turbo', label: 'GPT-4 Turbo', provider: 'OpenAI' },
+  { label: 'GPT-4o', provider: 'OpenAI', value: 'gpt-4o' },
+  { label: 'GPT-4o Mini', provider: 'OpenAI', value: 'gpt-4o-mini' },
+  { label: 'GPT-4 Turbo', provider: 'OpenAI', value: 'gpt-4-turbo' },
 
   // Anthropic
-  { value: 'claude-3-5-sonnet', label: 'Claude 3.5 Sonnet', provider: 'Anthropic' },
-  { value: 'claude-3-sonnet', label: 'Claude 3 Sonnet', provider: 'Anthropic' },
-  { value: 'claude-3-haiku', label: 'Claude 3 Haiku', provider: 'Anthropic' },
+  { label: 'Claude 3.5 Sonnet', provider: 'Anthropic', value: 'claude-3-5-sonnet' },
+  { label: 'Claude 3 Sonnet', provider: 'Anthropic', value: 'claude-3-sonnet' },
+  { label: 'Claude 3 Haiku', provider: 'Anthropic', value: 'claude-3-haiku' },
 
   // Google
-  { value: 'gemini-1.5-pro', label: 'Gemini 1.5 Pro', provider: 'Google' },
-  { value: 'gemini-1.5-flash', label: 'Gemini 1.5 Flash', provider: 'Google' },
+  { label: 'Gemini 1.5 Pro', provider: 'Google', value: 'gemini-1.5-pro' },
+  { label: 'Gemini 1.5 Flash', provider: 'Google', value: 'gemini-1.5-flash' },
 ]
 
 export function VercelCompletion({
@@ -68,13 +68,13 @@ export function VercelCompletion({
     setCompletion,
   } = useAICompletion({
     model: selectedModel,
-    systemMessage,
-    onFinish: (prompt, completion) => {
-      onComplete?.(prompt, completion)
-    },
     onError: (error) => {
       console.error('Completion error:', error)
     },
+    onFinish: (prompt, completion) => {
+      onComplete?.(prompt, completion)
+    },
+    systemMessage,
   })
 
   const handleSubmitWithModel = (e: React.FormEvent) => {
@@ -94,8 +94,8 @@ export function VercelCompletion({
       await navigator.clipboard.writeText(completion)
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
-    } catch (err) {
-      console.error('Failed to copy text:', err)
+    } catch (error) {
+      console.error('Failed to copy text:', error)
     }
   }
 
@@ -125,7 +125,7 @@ export function VercelCompletion({
                   <SelectItem key={model.value} value={model.value}>
                     <div className="flex w-full items-center justify-between">
                       <span>{model.label}</span>
-                      <span className="ml-2 text-muted-foreground text-xs">{model.provider}</span>
+                      <span className="text-muted-foreground ml-2 text-xs">{model.provider}</span>
                     </div>
                   </SelectItem>
                 ))}
@@ -178,7 +178,7 @@ export function VercelCompletion({
         </form>
 
         {error && (
-          <div className="rounded-md border border-destructive/20 bg-destructive/15 px-4 py-3">
+          <div className="border-destructive/20 bg-destructive/15 rounded-md border px-4 py-3">
             <p className="text-destructive text-sm">Error: {error.message}</p>
           </div>
         )}
@@ -192,8 +192,8 @@ export function VercelCompletion({
                 {copied ? 'Copied!' : 'Copy'}
               </Button>
             </div>
-            <div className="rounded-md border bg-muted p-4">
-              <div className="whitespace-pre-wrap text-sm">{completion}</div>
+            <div className="bg-muted rounded-md border p-4">
+              <div className="text-sm whitespace-pre-wrap">{completion}</div>
             </div>
           </div>
         )}

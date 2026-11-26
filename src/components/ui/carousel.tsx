@@ -11,7 +11,7 @@ type UseCarouselParameters = Parameters<typeof useEmblaCarousel>
 type CarouselOptions = UseCarouselParameters[0]
 type CarouselPlugin = UseCarouselParameters[1]
 
-type CarouselProps = {
+interface CarouselProps {
   opts?: CarouselOptions
   plugins?: CarouselPlugin
   orientation?: 'horizontal' | 'vertical'
@@ -110,17 +110,17 @@ function Carousel({
   return (
     <CarouselContext.Provider
       value={{
-        carouselRef,
         api,
+        canScrollNext,
+        canScrollPrev,
+        carouselRef,
         opts,
         orientation: orientation || (opts?.axis === 'y' ? 'vertical' : 'horizontal'),
-        scrollPrev,
         scrollNext,
-        canScrollPrev,
-        canScrollNext,
+        scrollPrev,
       }}
     >
-      {/* biome-ignore lint/a11y/useSemanticElements: shadcn carousel uses role="region" for carousel semantics */}
+      {/* Biome-ignore lint/a11y/useSemanticElements: shadcn carousel uses role="region" for carousel semantics */}
       <div
         onKeyDownCapture={handleKeyDown}
         className={cn('relative', className)}
@@ -152,7 +152,7 @@ function CarouselItem({ className, ...props }: React.ComponentProps<'div'>) {
   const { orientation } = useCarousel()
 
   return (
-    // biome-ignore lint/a11y/useSemanticElements: shadcn carousel pattern
+    // Biome-ignore lint/a11y/useSemanticElements: shadcn carousel pattern
     <div
       role="group"
       aria-roledescription="slide"
@@ -183,8 +183,8 @@ function CarouselPrevious({
       className={cn(
         'absolute size-8 rounded-full',
         orientation === 'horizontal'
-          ? '-left-12 -translate-y-1/2 top-1/2'
-          : '-top-12 -translate-x-1/2 left-1/2 rotate-90',
+          ? 'top-1/2 -left-12 -translate-y-1/2'
+          : '-top-12 left-1/2 -translate-x-1/2 rotate-90',
         className
       )}
       disabled={!canScrollPrev}
@@ -213,8 +213,8 @@ function CarouselNext({
       className={cn(
         'absolute size-8 rounded-full',
         orientation === 'horizontal'
-          ? '-right-12 -translate-y-1/2 top-1/2'
-          : '-bottom-12 -translate-x-1/2 left-1/2 rotate-90',
+          ? 'top-1/2 -right-12 -translate-y-1/2'
+          : '-bottom-12 left-1/2 -translate-x-1/2 rotate-90',
         className
       )}
       disabled={!canScrollNext}

@@ -1,8 +1,5 @@
 import { streamText } from 'ai'
-import { AI_MODELS, type AIModelKey } from '@/lib/ai/vercel-client'
-
-// Allow streaming responses up to 30 seconds
-export const maxDuration = 30
+import { type AIModelKey, AI_MODELS } from '@/lib/ai/vercel-client'
 
 export async function POST(req: Request) {
   try {
@@ -12,7 +9,7 @@ export async function POST(req: Request) {
     const modelInstance = AI_MODELS[model as AIModelKey] || AI_MODELS['gpt-4o-mini']
 
     // Prepare messages
-    const messages = [{ role: 'user' as const, content: prompt }]
+    const messages = [{ content: prompt, role: 'user' as const }]
 
     // Generate streaming response
     const result = await streamText({
@@ -27,8 +24,8 @@ export async function POST(req: Request) {
   } catch (error) {
     console.error('Completion API error:', error)
     return new Response(JSON.stringify({ error: 'Internal server error' }), {
-      status: 500,
       headers: { 'Content-Type': 'application/json' },
+      status: 500,
     })
   }
 }

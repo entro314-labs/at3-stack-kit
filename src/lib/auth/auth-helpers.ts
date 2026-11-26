@@ -1,4 +1,11 @@
 import { createClient as createBrowserClient } from '@/lib/supabase/client'
+import { sanitizeRedirectPath } from './redirect'
+
+function createAuthCallbackUrl(next: string) {
+  const callbackUrl = new URL('/auth/callback', window.location.origin)
+  callbackUrl.searchParams.set('next', sanitizeRedirectPath(next, '/dashboard'))
+  return callbackUrl.toString()
+}
 
 // Client-side auth helpers (safe for use in client components)
 export function signOut() {
@@ -11,24 +18,31 @@ export function signInWithEmail(email: string, password: string) {
   return supabase.auth.signInWithPassword({ email, password })
 }
 
-export function signUpWithEmail(email: string, password: string) {
+export function signUpWithEmail(
+  email: string,
+  password: string,
+  redirectTo: string = '/dashboard'
+) {
   const supabase = createBrowserClient()
   return supabase.auth.signUp({
     email,
-    password,
     options: {
-      emailRedirectTo: `${window.location.origin}/auth/callback`,
+      emailRedirectTo: createAuthCallbackUrl(redirectTo),
     },
+    password,
   })
 }
 
-export function signInWithProvider(provider: 'github' | 'google') {
+export function signInWithProvider(
+  provider: 'github' | 'google',
+  redirectTo: string = '/dashboard'
+) {
   const supabase = createBrowserClient()
   return supabase.auth.signInWithOAuth({
-    provider,
     options: {
-      redirectTo: `${window.location.origin}/auth/callback`,
+      redirectTo: createAuthCallbackUrl(redirectTo),
     },
+    provider,
   })
 }
 

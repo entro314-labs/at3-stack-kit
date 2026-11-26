@@ -44,11 +44,11 @@ export function CompletionForm({
 
   const { completion, isLoading, error, generate, reset } = useAICompletion({
     ...completionOptions,
-    provider,
-    model,
-    temperature,
     maxTokens,
+    model,
+    provider,
     systemMessage,
+    temperature,
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -68,8 +68,8 @@ export function CompletionForm({
       await navigator.clipboard.writeText(completion)
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
-    } catch (err) {
-      console.error('Failed to copy text:', err)
+    } catch (error) {
+      console.error('Failed to copy text:', error)
     }
   }
 
@@ -190,7 +190,7 @@ export function CompletionForm({
         </form>
 
         {error && (
-          <div className="rounded-md border border-destructive/20 bg-destructive/15 px-4 py-3">
+          <div className="border-destructive/20 bg-destructive/15 rounded-md border px-4 py-3">
             <p className="text-destructive text-sm">Error: {error.message}</p>
           </div>
         )}
@@ -204,8 +204,8 @@ export function CompletionForm({
                 {copied ? 'Copied!' : 'Copy'}
               </Button>
             </div>
-            <div className="rounded-md border bg-muted p-4">
-              <pre className="whitespace-pre-wrap font-mono text-sm">{completion}</pre>
+            <div className="bg-muted rounded-md border p-4">
+              <pre className="font-mono text-sm whitespace-pre-wrap">{completion}</pre>
             </div>
           </div>
         )}

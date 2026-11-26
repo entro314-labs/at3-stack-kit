@@ -1,8 +1,5 @@
-import { convertToModelMessages, streamText, type UIMessage } from 'ai'
-import { AI_MODELS, type AIModelKey } from '@/lib/ai/vercel-client'
-
-// Allow streaming responses up to 30 seconds
-export const maxDuration = 30
+import { type UIMessage, convertToModelMessages, streamText } from 'ai'
+import { type AIModelKey, AI_MODELS } from '@/lib/ai/vercel-client'
 
 export async function POST(req: Request) {
   try {
@@ -23,7 +20,7 @@ export async function POST(req: Request) {
     const result = await streamText({
       model: modelInstance,
       ...(systemMessage && { system: systemMessage }),
-      messages: convertToModelMessages(messages),
+      messages: await convertToModelMessages(messages),
       maxOutputTokens: 4000,
       temperature: 0.7,
       // Add safety settings for production
@@ -35,8 +32,8 @@ export async function POST(req: Request) {
   } catch (error) {
     console.error('Chat API error:', error)
     return new Response(JSON.stringify({ error: 'Internal server error' }), {
-      status: 500,
       headers: { 'Content-Type': 'application/json' },
+      status: 500,
     })
   }
 }

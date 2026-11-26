@@ -1,30 +1,15 @@
 import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
+import { NextIntlClientProvider } from 'next-intl'
+import { getLocale, getMessages } from 'next-intl/server'
 
+import { InstallPrompt } from '@/components/pwa/install-prompt'
+import { PWAProvider } from '@/components/providers/pwa-provider'
+import { ThemeProvider } from '@/components/providers/theme-provider'
+import { LanguageSwitcher } from '@/components/ui/language-switcher'
 import { cn } from '@/lib/utils'
 
 import './globals.css'
-
-// Vercel Analytics and Speed Insights components (optional)
-// Install with: pnpm add @vercel/analytics @vercel/speed-insights
-function VercelAnalytics() {
-  try {
-    // Dynamic import to avoid build errors when packages aren't installed
-    const { Analytics } = require('@vercel/analytics/react')
-    return <Analytics />
-  } catch {
-    return null
-  }
-}
-
-function VercelSpeedInsights() {
-  try {
-    const { SpeedInsights } = require('@vercel/speed-insights/next')
-    return <SpeedInsights />
-  } catch {
-    return null
-  }
-}
 
 const inter = Inter({
   subsets: ['latin'],
@@ -32,12 +17,20 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
-  title: {
-    default: 'AIT3E-Stack-Starter',
-    template: '%s | AIT3E-Stack-Starter',
-  },
+  authors: [
+    {
+      name: 'entro314-labs',
+      url: 'https://yourwebsite.com',
+    },
+  ],
+  creator: 'entro314-labs',
   description:
     'The AI-native evolution of the T3 stack, built for edge deployment and serverless infrastructure.',
+  icons: {
+    icon: '/icons/favicon.ico',
+    shortcut: '/icons/favicon-96x96.png',
+    apple: '/icons/apple-touch-icon.png',
+  },
   keywords: [
     'Next.js',
     'React',
@@ -47,13 +40,7 @@ export const metadata: Metadata = {
     'Starter Template',
     '2025',
   ],
-  authors: [
-    {
-      name: 'entro314-labs',
-      url: 'https://yourwebsite.com',
-    },
-  ],
-  creator: 'entro314-labs',
+  manifest: '/manifest.json',
   openGraph: {
     type: 'website',
     locale: 'en_US',
@@ -62,13 +49,6 @@ export const metadata: Metadata = {
     title: 'AIT3E-Stack-Starter',
     description:
       'The AI-native evolution of the T3 stack, built for edge deployment and serverless infrastructure.',
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'AIT3E-Stack-Starter',
-    description:
-      'The AI-native evolution of the T3 stack, built for edge deployment and serverless infrastructure.',
-    creator: '@yourtwitterhandle',
   },
   robots: {
     index: true,
@@ -81,39 +61,58 @@ export const metadata: Metadata = {
       'max-snippet': -1,
     },
   },
-  icons: {
-    icon: '/icons/favicon.ico',
-    shortcut: '/icons/favicon-96x96.png',
-    apple: '/icons/apple-touch-icon.png',
+  title: {
+    default: 'AIT3E-Stack-Starter',
+    template: '%s | AIT3E-Stack-Starter',
   },
-  manifest: '/manifest.json',
+  twitter: {
+    card: 'summary_large_image',
+    title: 'AIT3E-Stack-Starter',
+    description:
+      'The AI-native evolution of the T3 stack, built for edge deployment and serverless infrastructure.',
+    creator: '@yourtwitterhandle',
+  },
 }
 
 export const viewport: Viewport = {
-  width: 'device-width',
   initialScale: 1,
   maximumScale: 5,
   themeColor: [
     { media: '(prefers-color-scheme: light)', color: 'white' },
     { media: '(prefers-color-scheme: dark)', color: 'black' },
   ],
+  width: 'device-width',
 }
 
 interface RootLayoutProps {
   children: React.ReactNode
 }
 
-export default function RootLayout({ children }: RootLayoutProps) {
+export default async function RootLayout({ children }: RootLayoutProps) {
+  const [locale, messages] = await Promise.all([getLocale(), getMessages()])
+
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang={locale} suppressHydrationWarning>
       <head />
       <body
-        className={cn('min-h-screen bg-background font-sans antialiased', inter.variable)}
+        className={cn('bg-background min-h-screen font-sans antialiased', inter.variable)}
         suppressHydrationWarning
       >
-        {children}
-        <VercelAnalytics />
-        <VercelSpeedInsights />
+        <NextIntlClientProvider locale={locale} messages={messages}>
+          <ThemeProvider>
+            <PWAProvider>
+              <div className="fixed top-4 right-4 z-50">
+                <LanguageSwitcher />
+              </div>
+              {children}
+              <div className="pointer-events-none fixed right-4 bottom-4 z-50 max-w-sm">
+                <div className="pointer-events-auto">
+                  <InstallPrompt />
+                </div>
+              </div>
+            </PWAProvider>
+          </ThemeProvider>
+        </NextIntlClientProvider>
       </body>
     </html>
   )

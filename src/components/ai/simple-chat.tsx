@@ -38,10 +38,12 @@ export function SimpleChat() {
             <div>
               {message.parts.map((part, index) => {
                 switch (part.type) {
-                  case 'text':
+                  case 'text': {
                     return <span key={index}>{part.text}</span>
-                  default:
+                  }
+                  default: {
                     return <span key={index}>{JSON.stringify(part)}</span>
+                  }
                 }
               })}
             </div>

@@ -19,6 +19,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { signInWithEmail, signInWithProvider } from '@/lib/auth/auth-helpers'
+import { getSupabasePublicConfig } from '@/lib/supabase/config'
 import { cn } from '@/lib/utils'
 
 const signInSchema = z.object({
@@ -34,20 +35,28 @@ interface SignInFormProps {
 }
 
 export function SignInForm({ className, redirectTo = '/' }: SignInFormProps) {
+  const isAuthConfigured = Boolean(getSupabasePublicConfig())
   const router = useRouter()
   const [showPassword, setShowPassword] = React.useState(false)
   const [isLoading, setIsLoading] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
+  const authConfigMessage =
+    'Authentication is unavailable. Configure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.'
 
   const form = useForm<SignInFormData>({
-    resolver: zodResolver(signInSchema),
     defaultValues: {
       email: '',
       password: '',
     },
+    resolver: zodResolver(signInSchema),
   })
 
   const onSubmit = async (data: SignInFormData) => {
+    if (!isAuthConfigured) {
+      setError(authConfigMessage)
+      return
+    }
+
     setIsLoading(true)
     setError(null)
 
@@ -61,7 +70,7 @@ export function SignInForm({ className, redirectTo = '/' }: SignInFormProps) {
 
       router.push(redirectTo)
       router.refresh()
-    } catch (_err) {
+    } catch {
       setError('An unexpected error occurred. Please try again.')
     } finally {
       setIsLoading(false)
@@ -69,16 +78,21 @@ export function SignInForm({ className, redirectTo = '/' }: SignInFormProps) {
   }
 
   const handleProviderSignIn = async (provider: 'github' | 'google') => {
+    if (!isAuthConfigured) {
+      setError(authConfigMessage)
+      return
+    }
+
     setIsLoading(true)
     setError(null)
 
     try {
-      const { error } = await signInWithProvider(provider)
+      const { error } = await signInWithProvider(provider, redirectTo)
 
       if (error) {
         setError(error.message)
       }
-    } catch (_err) {
+    } catch {
       setError('An unexpected error occurred. Please try again.')
     } finally {
       setIsLoading(false)
@@ -88,12 +102,18 @@ export function SignInForm({ className, redirectTo = '/' }: SignInFormProps) {
   return (
     <Card className={cn('w-full max-w-md', className)}>
       <CardHeader className="space-y-1">
-        <CardTitle className="font-bold text-2xl">Sign In</CardTitle>
+        <CardTitle className="text-2xl font-bold">Sign In</CardTitle>
         <CardDescription>Enter your email and password to sign in to your account</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        {!isAuthConfigured && (
+          <div className="rounded-md border border-amber-300 bg-amber-50 px-4 py-3 dark:border-amber-800 dark:bg-amber-950/40">
+            <p className="text-sm text-amber-800 dark:text-amber-200">{authConfigMessage}</p>
+          </div>
+        )}
+
         {error && (
-          <div className="rounded-md border border-destructive/20 bg-destructive/15 px-4 py-3">
+          <div className="border-destructive/20 bg-destructive/15 rounded-md border px-4 py-3">
             <p className="text-destructive text-sm">{error}</p>
           </div>
         )}
@@ -106,7 +126,7 @@ export function SignInForm({ className, redirectTo = '/' }: SignInFormProps) {
               type="email"
               placeholder="name@example.com"
               {...form.register('email')}
-              disabled={isLoading}
+              disabled={isLoading || !isAuthConfigured}
             />
             {form.formState.errors.email && (
               <p className="text-destructive text-sm">{form.formState.errors.email.message}</p>
@@ -121,15 +141,15 @@ export function SignInForm({ className, redirectTo = '/' }: SignInFormProps) {
                 type={showPassword ? 'text' : 'password'}
                 placeholder="Enter your password"
                 {...form.register('password')}
-                disabled={isLoading}
+                disabled={isLoading || !isAuthConfigured}
               />
               <Button
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="-translate-y-1/2 absolute top-1/2 right-2 h-6 w-6"
+                className="absolute top-1/2 right-2 h-6 w-6 -translate-y-1/2"
                 onClick={() => setShowPassword(!showPassword)}
-                disabled={isLoading}
+                disabled={isLoading || !isAuthConfigured}
               >
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </Button>
@@ -139,7 +159,7 @@ export function SignInForm({ className, redirectTo = '/' }: SignInFormProps) {
             )}
           </div>
 
-          <Button type="submit" className="w-full" disabled={isLoading}>
+          <Button type="submit" className="w-full" disabled={isLoading || !isAuthConfigured}>
             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Sign In
           </Button>
@@ -150,7 +170,7 @@ export function SignInForm({ className, redirectTo = '/' }: SignInFormProps) {
             <span className="w-full border-t" />
           </div>
           <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
+            <span className="bg-background text-muted-foreground px-2">Or continue with</span>
           </div>
         </div>
 
@@ -158,7 +178,7 @@ export function SignInForm({ className, redirectTo = '/' }: SignInFormProps) {
           <Button
             variant="outline"
             onClick={() => handleProviderSignIn('github')}
-            disabled={isLoading}
+            disabled={isLoading || !isAuthConfigured}
           >
             <Github className="mr-2 h-4 w-4" />
             GitHub
@@ -166,7 +186,7 @@ export function SignInForm({ className, redirectTo = '/' }: SignInFormProps) {
           <Button
             variant="outline"
             onClick={() => handleProviderSignIn('google')}
-            disabled={isLoading}
+            disabled={isLoading || !isAuthConfigured}
           >
             <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24" aria-labelledby="googleIconTitle">
               <title id="googleIconTitle">Google</title>
@@ -192,9 +212,9 @@ export function SignInForm({ className, redirectTo = '/' }: SignInFormProps) {
         </div>
       </CardContent>
       <CardFooter>
-        <p className="w-full text-center text-muted-foreground text-sm">
+        <p className="text-muted-foreground w-full text-center text-sm">
           Don't have an account?{' '}
-          <a href="/auth/sign-up" className="underline underline-offset-4 hover:text-primary">
+          <a href="/auth/sign-up" className="hover:text-primary underline underline-offset-4">
             Sign up
           </a>
         </p>

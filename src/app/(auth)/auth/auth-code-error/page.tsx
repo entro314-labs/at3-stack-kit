@@ -8,17 +8,17 @@ export default function AuthCodeError() {
     <div className="container flex h-screen w-screen flex-col items-center justify-center">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-destructive/15">
-            <AlertTriangle className="h-6 w-6 text-destructive" />
+          <div className="bg-destructive/15 mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full">
+            <AlertTriangle className="text-destructive h-6 w-6" />
           </div>
-          <CardTitle className="font-bold text-2xl">Authentication Error</CardTitle>
+          <CardTitle className="text-2xl font-bold">Authentication Error</CardTitle>
           <CardDescription>Sorry, we couldn't complete your authentication</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4 text-center">
           <p className="text-muted-foreground text-sm">
             There was an error processing your authentication request. This could happen if:
           </p>
-          <ul className="space-y-1 text-left text-muted-foreground text-sm">
+          <ul className="text-muted-foreground space-y-1 text-left text-sm">
             <li>• The authentication link has expired</li>
             <li>• The link has already been used</li>
             <li>• There was a network issue</li>
