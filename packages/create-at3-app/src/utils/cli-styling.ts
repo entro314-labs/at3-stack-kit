@@ -7,55 +7,54 @@ import chalk from 'chalk'
 
 // Color palette - simplified for create-at3-app
 export const colors = {
+  accent: chalk.magenta,
+  error: chalk.red,
+  info: chalk.blue,
+  muted: chalk.gray,
   primary: chalk.cyan,
   secondary: chalk.blue,
   success: chalk.green,
-  error: chalk.red,
   warning: chalk.yellow,
-  info: chalk.blue,
-  muted: chalk.gray,
-  accent: chalk.magenta,
 } as const
 
 // Text styling utilities
 export const style = {
-  title: (text: string) => colors.primary.bold(text),
-  subtitle: (text: string) => colors.secondary(text),
-  heading: (text: string) => colors.primary.bold(text),
-  label: (text: string) => colors.muted(text),
-  value: (text: string) => colors.primary(text),
-  success: (text: string) => colors.success(text),
-  error: (text: string) => colors.error(text),
-  warning: (text: string) => colors.warning(text),
-  info: (text: string) => colors.info(text),
-  muted: (text: string) => colors.muted(text),
   accent: (text: string) => colors.accent(text),
   code: (text: string) => chalk.cyan.italic(text),
-  path: (text: string) => chalk.dim.underline(text),
   command: (text: string) => chalk.bgBlack.white.bold(` ${text} `),
+  error: (text: string) => colors.error(text),
+  heading: (text: string) => colors.primary.bold(text),
+  info: (text: string) => colors.info(text),
+  label: (text: string) => colors.muted(text),
+  muted: (text: string) => colors.muted(text),
+  path: (text: string) => chalk.dim.underline(text),
+  subtitle: (text: string) => colors.secondary(text),
+  success: (text: string) => colors.success(text),
+  title: (text: string) => colors.primary.bold(text),
+  value: (text: string) => colors.primary(text),
+  warning: (text: string) => colors.warning(text),
 } as const
 
 // Template feature styling
 export const featureStyle = {
-  nextjs: chalk.black,
-  typescript: chalk.blue,
-  tailwind: chalk.cyan,
-  trpc: chalk.magenta,
-  supabase: chalk.green,
   ai: chalk.hex('#10b981'),
   edge: chalk.yellow,
-  pwa: chalk.magenta,
   i18n: chalk.blue,
-  testing: chalk.red,
+  nextjs: chalk.black,
+  pwa: chalk.magenta,
   streaming: chalk.cyan,
+  supabase: chalk.green,
+  tailwind: chalk.cyan,
+  testing: chalk.red,
+  trpc: chalk.magenta,
+  typescript: chalk.blue,
 } as const
 
 // Format template features for display
-export const formatFeatures = (features: string[]) => {
-  return features
+export const formatFeatures = (features: string[]) =>
+  features
     .map((feature) => {
-      const colorFn = featureStyle[feature as keyof typeof featureStyle] || colors.muted
+      const colorFn = featureStyle[feature as keyof typeof featureStyle] ?? colors.muted
       return colorFn(`#${feature}`)
     })
     .join(' ')
-}

@@ -3,9 +3,32 @@
  * Enables smart detection and suggestions for other AT3 tools
  */
 
-import { existsSync } from 'node:fs'
-import { join } from 'node:path'
 import { colors, style } from './cli-styling.js'
+import { existsSync, readFileSync, writeFileSync } from 'node:fs'
+import { join } from 'node:path'
+
+const AT3_CONFIG_FILENAME = '.at3-config.json'
+const JSON_SPACES = 2
+
+const DEFAULT_WORKFLOWS = [
+  'Explore at3-kit to add more AT3 features',
+  'Use at3t for development workflow optimization',
+] as const
+
+const TEMPLATE_WORKFLOWS: Record<string, readonly string[]> = {
+  '83-flavor': [
+    'Your project includes the full AT3 stack - ready for production!',
+    'Use at3t migrate for advanced project maintenance',
+  ],
+  suggested: [
+    'Complete AT3 stack configured - explore all features',
+    'Use at3-kit to fine-tune specific features as needed',
+  ],
+  t3: [
+    'Consider adding AI features with at3-kit for enhanced functionality',
+    'Use at3t for advanced TypeScript and testing configurations',
+  ],
+}
 
 export interface AT3Config {
   version: string
@@ -19,21 +42,21 @@ export interface AT3Config {
 /**
  * Create AT3 configuration file for project tracking
  */
-export function createAT3Config(
+export const createAT3Config = (
   projectPath: string,
   config: Omit<AT3Config, 'version' | 'created'>
-): AT3Config {
+): AT3Config => {
   const fullConfig: AT3Config = {
-    version: '0.1.0',
-    created: new Date().toISOString(),
     ...config,
+    created: new Date().toISOString(),
     toolsUsed: [...new Set(['create-at3-app', ...(config.toolsUsed || [])])],
+    version: '0.1.0',
   }
 
   // Write config file (optional for integration)
   try {
-    const configPath = join(projectPath, '.at3-config.json')
-    require('node:fs').writeFileSync(configPath, JSON.stringify(fullConfig, null, 2))
+    const configPath = join(projectPath, AT3_CONFIG_FILENAME)
+    writeFileSync(configPath, JSON.stringify(fullConfig, undefined, JSON_SPACES))
   } catch {
     // Silently fail - integration is optional
   }
@@ -44,7 +67,7 @@ export function createAT3Config(
 /**
  * Detect if other AT3 tools might be useful for this project
  */
-export function suggestAT3Tools(template: string, features: string[]): string[] {
+export const suggestAT3Tools = (template: string, features: string[]): string[] => {
   const suggestions: string[] = []
 
   // Suggest at3-stack-kit for existing projects
@@ -67,44 +90,24 @@ export function suggestAT3Tools(template: string, features: string[]): string[] 
 /**
  * Check if project was created with AT3 tools
  */
-export function detectAT3Project(projectPath: string): AT3Config | null {
-  const configPath = join(projectPath, '.at3-config.json')
+export const detectAT3Project = (projectPath: string): AT3Config | undefined => {
+  const configPath = join(projectPath, AT3_CONFIG_FILENAME)
 
   if (!existsSync(configPath)) {
-    return null
+    return undefined
   }
 
   try {
-    const config = JSON.parse(require('node:fs').readFileSync(configPath, 'utf8'))
+    const config = JSON.parse(readFileSync(configPath, 'utf8'))
     return config
   } catch {
-    return null
+    return undefined
   }
 }
 
 /**
  * Get workflow suggestions based on project state
  */
-export function getWorkflowSuggestions(template: string): string[] {
-  const workflows: string[] = []
-
-  switch (template) {
-    case 't3':
-      workflows.push('Consider adding AI features with at3-kit for enhanced functionality')
-      workflows.push('Use at3t for advanced TypeScript and testing configurations')
-      break
-    case '83-flavor':
-      workflows.push('Your project includes the full AT3 stack - ready for production!')
-      workflows.push('Use at3t migrate for advanced project maintenance')
-      break
-    case 'suggested':
-      workflows.push('Complete AT3 stack configured - explore all features')
-      workflows.push('Use at3-kit to fine-tune specific features as needed')
-      break
-    default:
-      workflows.push('Explore at3-kit to add more AT3 features')
-      workflows.push('Use at3t for development workflow optimization')
-  }
-
-  return workflows
-}
+export const getWorkflowSuggestions = (template: string): string[] => [
+  ...(TEMPLATE_WORKFLOWS[template] ?? DEFAULT_WORKFLOWS),
+]

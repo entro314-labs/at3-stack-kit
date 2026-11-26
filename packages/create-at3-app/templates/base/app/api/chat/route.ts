@@ -1,15 +1,23 @@
-import { openai } from '@ai-sdk/openai';
-import { streamText } from 'ai';
+import { openai } from '@ai-sdk/openai'
+import { type UIMessage, convertToModelMessages, streamText } from 'ai'
 
-export const maxDuration = 30;
+export const maxDuration = 30
 
 export async function POST(req: Request) {
-  const { messages } = await req.json();
-
-  const result = streamText({
-    model: openai('gpt-4-turbo'),
+  const {
     messages,
-  });
+  }: {
+    messages?: UIMessage[]
+  } = await req.json()
 
-  return result.toTextStreamResponse();
+  if (!Array.isArray(messages)) {
+    return Response.json({ error: 'messages must be an array' }, { status: 400 })
+  }
+
+  const result = await streamText({
+    messages: await convertToModelMessages(messages),
+    model: openai('gpt-4o-mini'),
+  })
+
+  return result.toUIMessageStreamResponse()
 }
