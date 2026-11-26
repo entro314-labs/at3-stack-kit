@@ -3,43 +3,33 @@
   "version": "1.0.0-alpha.1",
   "description": "Upgrade existing projects to AT3 Stack with intelligent migration",
   "keywords": [
-    "at3",
-    "ait3e",
-    "at3-stack",
     "ai-native",
+    "ait3e",
+    "at3",
+    "at3-stack",
+    "cli",
+    "codemods",
+    "edge",
+    "migration",
     "nextjs",
     "react",
-    "typescript",
-    "tailwind",
-    "supabase",
-    "edge",
     "serverless",
-    "migration",
-    "upgrade",
-    "codemods",
-    "cli"
+    "supabase",
+    "tailwind",
+    "typescript",
+    "upgrade"
   ],
   "homepage": "https://at3-stack.dev",
   "bugs": {
     "url": "https://github.com/entro314-labs/at3-stack-kit/issues"
   },
+  "license": "MIT",
+  "author": "entro314-labs",
   "repository": {
     "type": "git",
     "url": "https://github.com/entro314-labs/at3-stack-kit.git",
     "directory": "packages/at3-stack-kit"
   },
-  "license": "MIT",
-  "author": "entro314-labs",
-  "type": "module",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
-    }
-  },
-  "main": "./dist/index.js",
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
   "bin": {
     "at3": "./dist/cli.js",
     "at3-kit": "./dist/cli.js"
@@ -49,25 +39,39 @@
     "README.md",
     "LICENSE"
   ],
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsup",
+    "check": "oxlint src && oxfmt --check src",
+    "check:fix": "oxlint --fix src && oxfmt --write src",
     "dev": "tsup --watch",
-    "test": "vitest",
+    "syncpack": "syncpack update --target latest && syncpack fix --dependency-types prod,dev && syncpack format",
+    "test": "vitest run",
     "test:ci": "vitest run",
-    "type-check": "tsc --noEmit",
-    "check": "biome check src/",
-    "check:fix": "biome check --write src/"
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "@clack/prompts": "^0.11.0",
+    "@clack/prompts": "^1.0.1",
     "boxen": "^8.0.1",
     "chalk": "^5.6.2",
-    "commander": "^14.0.2",
+    "commander": "^14.0.3",
     "cross-spawn": "^7.0.6",
     "detect-package-manager": "^3.0.2",
     "figures": "^6.1.0",
-    "fs-extra": "^11.3.2",
-    "glob": "^13.0.0",
+    "fs-extra": "^11.3.3",
+    "glob": "^13.0.3",
     "gradient-string": "^3.0.0",
     "jscodeshift": "^17.3.0"
   },
@@ -76,15 +80,12 @@
     "@types/figures": "^3.0.3",
     "@types/fs-extra": "^11.0.4",
     "@types/gradient-string": "^1.1.6",
-    "@types/node": "^24.10.1",
+    "@types/node": "^25.2.3",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3",
-    "vitest": "^4.0.14"
+    "vitest": "^4.0.18"
   },
   "engines": {
-    "node": ">=22.x"
-  },
-  "publishConfig": {
-    "access": "public"
+    "node": ">=24.19.0"
   }
 }

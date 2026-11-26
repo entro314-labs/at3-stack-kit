@@ -11,7 +11,28 @@ packages:
 
 # pnpm configuration
 onlyBuiltDependencies:
-  - esbuild
   - '@swc/core'
+  - '@tailwindcss/oxide'
+  - '@vercel/speed-insights'
+  - bun
+  - core-js
+  - core-js-pure
+  - esbuild
+  - msw
   - 'sharp'
   - 'supabase'
+
+allowedDeprecatedVersions:
+  glob: '*'
+  inflight: '*'
+
+overrides:
+  '@types/react': ^19.2.14
+  '@types/react-dom': ^19.2.3
+  'undici@>=4.5.0 <5.28.5': '>=7.22.0'
+  'path-to-regexp@>=4.0.0 <6.3.0': '>=8.3.0'
+  'esbuild@<=0.24.2': '>=0.27.3'
+  'undici@<5.29.0': '>=7.22.0'
+  'tmp@<=0.2.3': '>=0.2.5'
+
+patchedDependencies: {}

@@ -3,49 +3,37 @@
   "version": "1.0.0-alpha.1",
   "description": "Advanced development toolkit for AT3 Stack projects",
   "keywords": [
-    "at3",
+    "ai-native",
     "ait3e",
+    "at3",
     "at3-stack",
     "at3t",
-    "ai-native",
-    "nextjs",
-    "react",
-    "typescript",
-    "tailwind",
-    "supabase",
+    "cli",
+    "devtools",
     "edge",
-    "serverless",
-    "biome",
-    "vitest",
     "linting",
+    "nextjs",
+    "oxc",
+    "react",
+    "serverless",
+    "supabase",
+    "tailwind",
     "testing",
     "toolkit",
-    "devtools",
-    "cli"
+    "typescript",
+    "vitest"
   ],
   "homepage": "https://at3-stack.dev",
   "bugs": {
     "url": "https://github.com/entro314-labs/at3-stack-kit/issues"
   },
+  "license": "MIT",
+  "author": "entro314-labs",
   "repository": {
     "type": "git",
     "url": "https://github.com/entro314-labs/at3-stack-kit.git",
     "directory": "packages/at3-toolkit"
   },
-  "license": "MIT",
-  "author": "entro314-labs",
-  "type": "module",
-  "exports": {
-    ".": {
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
-    },
-    "./cli": {
-      "import": "./dist/cli.js"
-    }
-  },
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
   "bin": {
     "at3-toolkit": "./dist/cli.js",
     "at3t": "./dist/cli.js"
@@ -57,20 +45,37 @@
     "README.md",
     "CHANGELOG.md"
   ],
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./cli": {
+      "import": "./dist/cli.js"
+    }
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
+  },
   "scripts": {
     "bench": "vitest bench",
     "build": "tsc && chmod +x dist/cli.js",
+    "check": "oxlint src && oxfmt --check src",
+    "check:fix": "oxlint --fix src && oxfmt --write src",
     "dev": "tsc --watch",
-    "format": "biome format --write .",
-    "format:check": "biome check .",
-    "lint": "biome check .",
-    "lint:fix": "biome check --fix .",
-    "check": "biome check src/",
-    "check:fix": "biome check --write src/",
+    "format": "oxfmt --write .",
+    "format:check": "oxfmt --check .",
+    "lint": "oxlint .",
+    "lint:fix": "oxlint --fix .",
     "prepublishOnly": "pnpm build",
     "release": "changeset publish",
     "release:dry-run": "echo 'Dry run release complete'",
-    "test": "vitest",
+    "syncpack": "syncpack update --target latest && syncpack fix --dependency-types prod,dev && syncpack format",
+    "test": "vitest run",
     "test:ci": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:integration": "vitest run --config vitest.integration.config.ts",
@@ -80,40 +85,38 @@
     "version": "changeset version"
   },
   "dependencies": {
-    "@clack/prompts": "^0.11.0",
+    "@clack/prompts": "^1.0.1",
     "boxen": "^8.0.1",
     "chalk": "^5.6.2",
     "cli-table3": "^0.6.5",
-    "commander": "^14.0.2",
+    "commander": "^14.0.3",
     "detect-package-manager": "^3.0.2",
     "figures": "^6.1.0",
-    "fs-extra": "^11.3.2",
-    "glob": "^13.0.0",
+    "fs-extra": "^11.3.3",
+    "glob": "^13.0.3",
     "gradient-string": "^3.0.0",
-    "semver": "^7.7.3",
+    "semver": "^7.7.4",
     "toml": "^3.0.0",
-    "validate-npm-package-name": "^7.0.0",
-    "yaml": "^2.8.1"
+    "validate-npm-package-name": "^7.0.2",
+    "yaml": "^2.8.2"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.3.8",
-    "@changesets/cli": "^2.29.7",
+    "@changesets/cli": "^2.29.8",
     "@types/fs-extra": "^11.0.4",
-    "@types/node": "^24.10.1",
+    "@types/node": "^25.2.3",
     "@types/semver": "^7.7.1",
-    "@vitest/coverage-v8": "^4.0.14",
+    "@vitest/coverage-v8": "^4.0.18",
+    "oxfmt": "^0.32.0",
+    "oxlint": "^1.47.0",
+    "oxlint-tsgolint": "^0.13.0",
     "typescript": "^5.9.3",
-    "vitest": "^4.0.14"
+    "vitest": "^4.0.18"
   },
   "peerDependencies": {
     "typescript": ">=5.9.3"
   },
-  "engines": {
-    "node": ">=22.x"
-  },
   "preferGlobal": true,
-  "publishConfig": {
-    "access": "public",
-    "registry": "https://registry.npmjs.org"
+  "engines": {
+    "node": ">=24.19.0"
   }
 }
