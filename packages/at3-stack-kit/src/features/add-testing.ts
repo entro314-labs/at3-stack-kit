@@ -2,14 +2,16 @@
  * Add testing suite to existing project
  */
 
-import { ensureDir, pathExists, readJson, writeFile, writeJson } from 'fs-extra'
+import { ensureDir, readJson, writeFile, writeJson } from 'fs-extra'
 import { join } from 'path'
+import { resolveSourceRoot, usesSrcDirectory } from './project-paths.js'
 
 /**
  * Add testing suite to existing project
  */
 export async function addTesting(projectPath: string): Promise<void> {
   const packageJsonPath = join(projectPath, 'package.json')
+  const sourceRoot = resolveSourceRoot(projectPath)
 
   try {
     const pkg = await readJson(packageJsonPath)
@@ -19,41 +21,41 @@ export async function addTesting(projectPath: string): Promise<void> {
     pkg.scripts = {
       ...pkg.scripts,
       test: 'vitest',
-      'test:ui': 'vitest --ui',
-      'test:run': 'vitest run',
       'test:coverage': 'vitest run --coverage',
       'test:e2e': 'playwright test',
-      'test:e2e:ui': 'playwright test --ui',
       'test:e2e:report': 'playwright show-report',
+      'test:e2e:ui': 'playwright test --ui',
+      'test:run': 'vitest run',
+      'test:ui': 'vitest --ui',
     }
 
     // Add devDependencies
     pkg.devDependencies = {
       ...pkg.devDependencies,
-      vitest: '^4.0.14',
-      '@vitest/ui': '^4.0.14',
-      '@vitest/coverage-v8': '^4.0.14',
-      '@testing-library/react': '^16.3.0',
-      '@testing-library/dom': '^10.4.1',
-      '@testing-library/user-event': '^14.6.1',
-      '@testing-library/jest-dom': '^6.9.1',
-      jsdom: '^27.2.0',
-      '@playwright/test': '^1.57.0',
-      '@vitejs/plugin-react': '^5.1.1',
       '@faker-js/faker': '^10.1.0',
+      '@playwright/test': '^1.57.0',
+      '@testing-library/dom': '^10.4.1',
+      '@testing-library/jest-dom': '^6.9.1',
+      '@testing-library/react': '^16.3.0',
+      '@testing-library/user-event': '^14.6.1',
+      '@vitejs/plugin-react': '^5.1.1',
+      '@vitest/coverage-v8': '^4.0.14',
+      '@vitest/ui': '^4.0.14',
+      jsdom: '^27.2.0',
+      vitest: '^4.0.14',
     }
 
     await writeJson(packageJsonPath, pkg, { spaces: 2 })
 
     // Create test directories
-    const testDir = join(projectPath, 'src', 'test')
+    const testDir = join(sourceRoot, 'test')
     const e2eDir = join(projectPath, 'tests', 'e2e')
     const unitDir = join(projectPath, 'tests', 'unit')
 
     await ensureDir(testDir)
     await ensureDir(e2eDir)
     await ensureDir(unitDir)
-    await ensureDir(join(projectPath, 'src', 'app'))
+    await ensureDir(join(sourceRoot, 'app'))
 
     // Create test setup file
     await createTestSetup(testDir)
@@ -134,6 +136,7 @@ async function createTestUtils(testDir: string): Promise<void> {
 import { render } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { ReactElement, ReactNode } from 'react'
+import { vi } from 'vitest'
 
 // Add providers here as your app grows
 interface WrapperProps {
@@ -179,22 +182,27 @@ export async function waitForStateUpdate(): Promise<void> {
  * Helper to create a mock function with specific return value
  */
 export function createMockFn<T>(returnValue?: T) {
-  const { vi } = await import('vitest')
   return vi.fn().mockReturnValue(returnValue)
 }
 
 /**
  * Helper to mock a module
  */
-export async function mockModule(modulePath: string, mocks: Record<string, unknown>) {
-  const { vi } = await import('vitest')
-  vi.mock(modulePath, () => mocks)
+export function mockModule(modulePath: string, mocks: Record<string, unknown>) {
+  vi.doMock(modulePath, () => mocks)
 }
 `
   await writeFile(join(testDir, 'utils.tsx'), testUtils)
 }
 
 async function createVitestConfig(projectPath: string): Promise<void> {
+  const hasSrcDirectory = usesSrcDirectory(projectPath)
+  const setupFile = hasSrcDirectory ? './src/test/setup.ts' : './test/setup.ts'
+  const sourceInclude = hasSrcDirectory
+    ? "'src/**/*.{test,spec}.{js,ts,jsx,tsx}',"
+    : "'{app,components,hooks,lib,stores,test,types}/**/*.{test,spec}.{js,ts,jsx,tsx}',"
+  const testUtilsExclude = hasSrcDirectory ? "'src/test/'," : "'test/',"
+  const aliasRoot = hasSrcDirectory ? './src' : '.'
   const vitestConfig = `import react from '@vitejs/plugin-react'
 import { resolve } from 'path'
 import { defineConfig } from 'vitest/config'
@@ -204,9 +212,9 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     globals: true,
-    setupFiles: ['./src/test/setup.ts'],
+    setupFiles: ['${setupFile}'],
     include: [
-      'src/**/*.{test,spec}.{js,ts,jsx,tsx}',
+      ${sourceInclude}
       'tests/unit/**/*.{test,spec}.{js,ts,jsx,tsx}',
     ],
     exclude: [
@@ -221,7 +229,7 @@ export default defineConfig({
       reporter: ['text', 'json', 'html'],
       exclude: [
         'node_modules/',
-        'src/test/',
+        ${testUtilsExclude}
         '**/*.d.ts',
         '**/*.config.*',
         '**/types/**',
@@ -240,7 +248,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@': resolve(__dirname, './src'),
+      '@': resolve(__dirname, '${aliasRoot}'),
     },
   },
 })
@@ -548,54 +556,6 @@ test.describe('Performance', () => {
 })
 `
   await writeFile(join(e2eDir, 'home.spec.ts'), sampleE2ETest)
-
-  // Create auth e2e test
-  const authE2ETest = `import { expect, test } from '@playwright/test'
-
-test.describe('Authentication', () => {
-  test.describe('Login Flow', () => {
-    test('shows login form', async ({ page }) => {
-      await page.goto('/login')
-
-      // Check for login form elements
-      await expect(page.getByLabel(/email/i)).toBeVisible()
-      await expect(page.getByLabel(/password/i)).toBeVisible()
-      await expect(page.getByRole('button', { name: /sign in|login/i })).toBeVisible()
-    })
-
-    test('shows validation errors for empty form', async ({ page }) => {
-      await page.goto('/login')
-
-      // Try to submit empty form
-      await page.getByRole('button', { name: /sign in|login/i }).click()
-
-      // Check for validation messages
-      // Adjust based on your validation implementation
-    })
-
-    test('shows error for invalid credentials', async ({ page }) => {
-      await page.goto('/login')
-
-      await page.getByLabel(/email/i).fill('invalid@example.com')
-      await page.getByLabel(/password/i).fill('wrongpassword')
-      await page.getByRole('button', { name: /sign in|login/i }).click()
-
-      // Check for error message
-      // await expect(page.getByText(/invalid credentials/i)).toBeVisible()
-    })
-  })
-
-  test.describe('Protected Routes', () => {
-    test('redirects unauthenticated users', async ({ page }) => {
-      await page.goto('/dashboard')
-
-      // Should redirect to login
-      await expect(page).toHaveURL(/login/)
-    })
-  })
-})
-`
-  await writeFile(join(e2eDir, 'auth.spec.ts'), authE2ETest)
 }
 
 async function createMockUtils(testDir: string): Promise<void> {
@@ -752,9 +712,17 @@ export function mockLocalStorage() {
 }
 
 function getDevCommand(packageManager?: string): string {
-  if (!packageManager) return 'pnpm dev'
-  if (packageManager.startsWith('npm')) return 'npm run dev'
-  if (packageManager.startsWith('yarn')) return 'yarn dev'
-  if (packageManager.startsWith('bun')) return 'bun run dev'
+  if (!packageManager) {
+    return 'pnpm dev'
+  }
+  if (packageManager.startsWith('npm')) {
+    return 'npm run dev'
+  }
+  if (packageManager.startsWith('yarn')) {
+    return 'yarn dev'
+  }
+  if (packageManager.startsWith('bun')) {
+    return 'bun run dev'
+  }
   return 'pnpm dev'
 }

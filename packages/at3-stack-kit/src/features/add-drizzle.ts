@@ -4,13 +4,14 @@
 
 import { ensureDir, pathExists, readFile, writeFile } from 'fs-extra'
 import { join } from 'path'
+import { resolveSourceRoot, usesSrcDirectory } from './project-paths.js'
 
 export async function addDrizzle(projectPath: string): Promise<void> {
-  const srcPath = join(projectPath, 'src')
-  await ensureDir(srcPath)
+  const sourceRoot = resolveSourceRoot(projectPath)
+  await ensureDir(sourceRoot)
 
   // Create db directory
-  const dbPath = join(srcPath, 'db')
+  const dbPath = join(sourceRoot, 'db')
   await ensureDir(dbPath)
 
   // Add Drizzle config
@@ -32,6 +33,7 @@ export async function addDrizzle(projectPath: string): Promise<void> {
 }
 
 async function addDrizzleConfig(projectPath: string): Promise<void> {
+  const schemaPath = usesSrcDirectory(projectPath) ? './src/db/schema.ts' : './db/schema.ts'
   const config = `import { defineConfig } from 'drizzle-kit';
 import * as dotenv from 'dotenv';
 
@@ -42,7 +44,7 @@ if (!process.env.DATABASE_URL) {
 }
 
 export default defineConfig({
-  schema: './src/db/schema.ts',
+  schema: '${schemaPath}',
   out: './drizzle',
   dialect: 'postgresql',
   dbCredentials: {
@@ -86,13 +88,21 @@ export const db = drizzle(client, { schema });
 async function updatePackageJson(projectPath: string): Promise<void> {
   const packageJsonPath = join(projectPath, 'package.json')
 
-  if (!(await pathExists(packageJsonPath))) return
+  if (!(await pathExists(packageJsonPath))) {
+    return
+  }
 
-  const packageJson = JSON.parse(await readFile(packageJsonPath, 'utf-8'))
+  const packageJson = JSON.parse(await readFile(packageJsonPath, 'utf8'))
 
-  if (!packageJson.dependencies) packageJson.dependencies = {}
-  if (!packageJson.devDependencies) packageJson.devDependencies = {}
-  if (!packageJson.scripts) packageJson.scripts = {}
+  if (!packageJson.dependencies) {
+    packageJson.dependencies = {}
+  }
+  if (!packageJson.devDependencies) {
+    packageJson.devDependencies = {}
+  }
+  if (!packageJson.scripts) {
+    packageJson.scripts = {}
+  }
 
   // Add dependencies
   packageJson.dependencies['drizzle-orm'] = '^0.36.0'
@@ -120,7 +130,7 @@ async function addEnvExample(projectPath: string): Promise<void> {
 
   // Read existing .env.example if it exists
   if (await pathExists(envExamplePath)) {
-    envContent = await readFile(envExamplePath, 'utf-8')
+    envContent = await readFile(envExamplePath, 'utf8')
   }
 
   // Add Database variables if not present
@@ -130,7 +140,7 @@ async function addEnvExample(projectPath: string): Promise<void> {
 DATABASE_URL="postgresql://postgres:password@localhost:5432/postgres"
 `
 
-    envContent = envContent + dbVars
+    envContent += dbVars
     await writeFile(envExamplePath, envContent)
   }
 }

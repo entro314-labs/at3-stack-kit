@@ -5,89 +5,103 @@
  * Upgrade existing projects to AT3 Stack with AI, edge, and modern features
  */
 
-import {
-  cancel,
-  confirm,
-  intro,
-  isCancel,
-  multiselect,
-  note,
-  outro,
-  select,
-  spinner,
-} from '@clack/prompts'
+import { cancel, confirm, intro, isCancel, multiselect, note, outro, spinner } from '@clack/prompts'
 import chalk from 'chalk'
 import { program } from 'commander'
 import { detect as detectPackageManager } from 'detect-package-manager'
 import { existsSync, readFileSync } from 'fs-extra'
 import { join } from 'path'
-import { detectProjectType, type ProjectType } from './detect.js'
-import { addAI, addBetterAuth, addClerk, addDrizzle, addI18n, addPWA, addSupabase, addTesting } from './features/index.js'
+import { analyzeProject, type ProjectInfo, type ProjectType, detectProjectType } from './detect.js'
+import {
+  addAI,
+  addBetterAuth,
+  addClerk,
+  addDrizzle,
+  addI18n,
+  addNeon,
+  addPWA,
+  addSupabase,
+  addTesting,
+} from './features/index.js'
 import { colors, header, style, symbols } from './utils/cli-styling.js'
 import { getPostMigrationWorkflow, suggestAT3Tools, updateAT3Config } from './utils/integration.js'
 import spawn from 'cross-spawn'
 
 const features = [
   {
+    description: 'Add custom AI integration with multiple providers',
     id: 'ai-custom',
     name: 'AI Integration (Custom)',
-    description: 'Add custom AI integration with multiple providers',
     value: 'ai-custom',
   },
   {
+    description: 'Add Vercel AI SDK for streaming responses',
     id: 'ai-vercel',
     name: 'AI Integration (Vercel SDK)',
-    description: 'Add Vercel AI SDK for streaming responses',
     value: 'ai-vercel',
   },
   {
+    description: 'Add Supabase for database, auth, and edge functions',
     id: 'supabase',
     name: 'Supabase',
-    description: 'Add Supabase for database, auth, and edge functions',
     value: 'supabase',
   },
   {
+    description: 'Add Drizzle ORM with generic PostgreSQL support',
     id: 'drizzle',
     name: 'Drizzle ORM + PostgreSQL',
-    description: 'Add Drizzle ORM with generic PostgreSQL support',
     value: 'drizzle',
   },
   {
+    description: 'Add Neon serverless PostgreSQL client and starter wiring',
+    id: 'neon',
+    name: 'Neon (Serverless Postgres)',
+    value: 'neon',
+  },
+  {
+    description: 'Add Clerk authentication',
     id: 'clerk',
     name: 'Clerk Auth',
-    description: 'Add Clerk authentication',
     value: 'clerk',
   },
   {
+    description: 'Add Better Auth with Drizzle/PostgreSQL persistence',
     id: 'better-auth',
     name: 'Better Auth',
-    description: 'Add Better Auth (Self-hosted auth)',
     value: 'better-auth',
   },
   {
+    description: 'Add Progressive Web App features',
     id: 'pwa',
     name: 'PWA Support',
-    description: 'Add Progressive Web App features',
     value: 'pwa',
   },
   {
+    description: 'Add next-intl for multi-language support',
     id: 'i18n',
     name: 'Internationalization',
-    description: 'Add next-intl for multi-language support',
     value: 'i18n',
   },
   {
+    description: 'Add Vitest and Playwright for comprehensive testing',
     id: 'testing',
     name: 'Testing Suite',
-    description: 'Add Vitest and Playwright for comprehensive testing',
     value: 'testing',
   },
 ] as const
 
 type FeatureId = (typeof features)[number]['value']
 
-async function main() {
+interface MainOptions {
+  dryRun?: boolean
+  install?: boolean
+}
+
+async function main(options: MainOptions = {}) {
   console.clear()
+
+  const dryRun = options.dryRun === true
+  const installAllowed = options.install !== false
 
   intro(style.title('AT3 Stack Kit'))
 
@@ -97,6 +111,7 @@ async function main() {
 
   const projectType = await detectProjectType(process.cwd())
   const packageManager = await detectPackageManager().catch(() => 'npm')
+  const analyzedProject = await analyzeProject(process.cwd()).catch(() => null)
 
   s.stop(
     `${symbols.success} Detected: ${style.value(getProjectTypeLabel(projectType))} project using ${style.accent(packageManager)}`
@@ -116,9 +131,9 @@ async function main() {
   const selectedFeatures = await multiselect({
     message: 'Which features would you like to add?',
     options: features.map((feature) => ({
-      value: feature.value,
-      label: feature.name,
       hint: feature.description,
+      label: feature.name,
+      value: feature.value,
     })),
     required: true,
   })
@@ -128,15 +143,24 @@ async function main() {
     process.exit(0)
   }
 
-  // Confirm installation
-  const shouldInstall = await confirm({
-    message: `Install dependencies with ${packageManager}?`,
-    initialValue: true,
-  })
+  let shouldInstall = false
+  if (dryRun) {
+    note(
+      `Dry run is enabled. Planned changes will be shown, but no files or dependencies will be modified.`,
+      'Dry Run'
+    )
+  } else if (installAllowed) {
+    const installConfirmation = await confirm({
+      initialValue: true,
+      message: `Install dependencies with ${packageManager}?`,
+    })
 
-  if (isCancel(shouldInstall)) {
-    cancel('Operation cancelled.')
-    process.exit(0)
+    if (isCancel(installConfirmation)) {
+      cancel('Operation cancelled.')
+      process.exit(0)
+    }
+
+    shouldInstall = installConfirmation
   }
 
   // Apply features
@@ -146,34 +170,52 @@ async function main() {
     for (const featureId of selectedFeatures as FeatureId[]) {
       addSpinner.start(`Adding ${getFeatureName(featureId)}...`)
 
+      if (dryRun) {
+        addSpinner.stop(`↷ Would add ${getFeatureName(featureId)}`)
+        continue
+      }
+
       switch (featureId) {
-        case 'ai-custom':
+        case 'ai-custom': {
           await addAI('custom', process.cwd())
           break
-        case 'ai-vercel':
+        }
+        case 'ai-vercel': {
           await addAI('vercel', process.cwd())
           break
-        case 'supabase':
+        }
+        case 'supabase': {
           await addSupabase(process.cwd())
           break
-        case 'drizzle':
+        }
+        case 'drizzle': {
           await addDrizzle(process.cwd())
           break
-        case 'clerk':
+        }
+        case 'neon': {
+          await addNeon(process.cwd())
+          break
+        }
+        case 'clerk': {
           await addClerk(process.cwd())
           break
-        case 'better-auth':
+        }
+        case 'better-auth': {
           await addBetterAuth(process.cwd())
           break
-        case 'pwa':
+        }
+        case 'pwa': {
           await addPWA(process.cwd())
           break
-        case 'i18n':
+        }
+        case 'i18n': {
           await addI18n(process.cwd())
           break
-        case 'testing':
+        }
+        case 'testing': {
           await addTesting(process.cwd())
           break
+        }
       }
 
       addSpinner.stop(`✓ Added ${getFeatureName(featureId)}`)
@@ -200,9 +242,26 @@ async function main() {
       addSpinner.stop('✓ Dependencies installed')
     }
 
+    if (dryRun) {
+      const plannedSteps = [
+        ...(selectedFeatures as FeatureId[]).map((feature) => `Add ${getFeatureName(feature)}`),
+        installAllowed
+          ? `Install dependencies with ${packageManager}`
+          : 'Skip dependency installation',
+      ]
+
+      outro(style.success('✅ Dry run complete'))
+      note(
+        `${plannedSteps.map((step, index) => `  ${colors.muted(`${index + 1}.`)} ${step}`).join('\n')}`,
+        'Planned Changes'
+      )
+      return
+    }
+
     // Update AT3 configuration and get suggestions
-    const projectInfo = { type: projectType, packageManager } as any // Simplified for now
-    const addedFeatures = selectedFeatures // This would be the actual added features
+    const projectInfo = analyzedProject || buildFallbackProjectInfo(projectType, packageManager)
+
+    const addedFeatures = selectedFeatures as string[]
 
     updateAT3Config(process.cwd(), addedFeatures)
     const toolSuggestions = suggestAT3Tools(projectInfo, addedFeatures)
@@ -248,16 +307,57 @@ ${
 
 function getProjectTypeLabel(type: ProjectType): string {
   switch (type) {
-    case 'nextjs':
+    case 'nextjs': {
       return 'Next.js'
-    case 't3':
+    }
+    case 't3': {
       return 'T3 Stack'
-    case 'react':
+    }
+    case 'react': {
       return 'React'
-    case 'unknown':
+    }
+    case 'unknown': {
       return 'Unknown'
-    default:
+    }
+    default: {
       return 'Unknown'
+    }
+  }
+}
+
+function buildFallbackProjectInfo(projectType: ProjectType, packageManager: string): ProjectInfo {
+  const normalizedPackageManager: ProjectInfo['packageManager'] =
+    packageManager === 'pnpm' || packageManager === 'yarn' || packageManager === 'bun'
+      ? packageManager
+      : 'npm'
+
+  return {
+    authProvider: 'none',
+    configFiles: [],
+    dependencies: [],
+    hasAI: false,
+    hasBiome: false,
+    hasDrizzle: false,
+    hasEdgeRuntime: false,
+    hasEslint: false,
+    hasI18n: false,
+    hasNextjs: projectType === 'nextjs' || projectType === 't3' || projectType === 'ait3e',
+    hasPWA: false,
+    hasPlaywright: false,
+    hasPrettier: false,
+    hasPrisma: false,
+    hasReact: projectType === 'react',
+    hasSupabase: false,
+    hasTailwind: false,
+    hasTRPC: false,
+    hasTypeScript: false,
+    hasVectorDB: false,
+    hasVitest: false,
+    hasVue: false,
+    packageManager: normalizedPackageManager,
+    path: process.cwd(),
+    testing: { e2e: 'none', unit: 'none' },
+    type: projectType,
   }
 }
 
@@ -268,7 +368,7 @@ function getProjectInfo(type: ProjectType): string {
     return 'No package.json found'
   }
 
-  const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'))
+  const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8'))
   const deps = Object.keys({ ...packageJson.dependencies, ...packageJson.devDependencies })
 
   let info = `Project: ${packageJson.name || 'unnamed'}\n`
@@ -297,7 +397,7 @@ program
   .option('-d, --dry-run', 'Show what would be changed without making changes')
   .option('--no-install', 'Skip installing dependencies')
   .action(async (options: { dryRun?: boolean; install?: boolean }) => {
-    await main()
+    await main(options)
   })
 
 // Subcommands
@@ -319,33 +419,46 @@ program
 
     try {
       switch (feature) {
-        case 'ai-custom':
+        case 'ai-custom': {
           await addAI('custom', process.cwd())
           break
-        case 'ai-vercel':
+        }
+        case 'ai-vercel': {
           await addAI('vercel', process.cwd())
           break
-        case 'supabase':
+        }
+        case 'supabase': {
           await addSupabase(process.cwd())
           break
-        case 'drizzle':
+        }
+        case 'drizzle': {
           await addDrizzle(process.cwd())
           break
-        case 'clerk':
+        }
+        case 'neon': {
+          await addNeon(process.cwd())
+          break
+        }
+        case 'clerk': {
           await addClerk(process.cwd())
           break
-        case 'better-auth':
+        }
+        case 'better-auth': {
           await addBetterAuth(process.cwd())
           break
-        case 'pwa':
+        }
+        case 'pwa': {
           await addPWA(process.cwd())
           break
-        case 'i18n':
+        }
+        case 'i18n': {
           await addI18n(process.cwd())
           break
-        case 'testing':
+        }
+        case 'testing': {
           await addTesting(process.cwd())
           break
+        }
       }
 
       if (options.install !== false) {

@@ -4,6 +4,7 @@
  */
 
 import { existsSync } from 'fs-extra'
+import { readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'path'
 import type { ProjectInfo } from '../detect.js'
 import { colors, style } from './cli-styling.js'
@@ -23,16 +24,14 @@ export interface AT3Config {
  */
 export function updateAT3Config(projectPath: string, addedFeatures: string[]): AT3Config {
   const configPath = join(projectPath, '.at3-config.json')
-  let config: AT3Config
+  let config = createDefaultConfig()
 
   if (existsSync(configPath)) {
     try {
-      config = JSON.parse(require('fs').readFileSync(configPath, 'utf8'))
+      config = JSON.parse(readFileSync(configPath, 'utf8'))
     } catch {
       config = createDefaultConfig()
     }
-  } else {
-    config = createDefaultConfig()
   }
 
   // Update config
@@ -42,9 +41,10 @@ export function updateAT3Config(projectPath: string, addedFeatures: string[]): A
 
   // Write config file (optional for integration)
   try {
-    require('fs').writeFileSync(configPath, JSON.stringify(config, null, 2))
-  } catch {
-    // Silently fail - integration is optional
+    writeFileSync(configPath, JSON.stringify(config, null, 2))
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error)
+    process.stderr.write(`[at3-stack-kit] Warning: failed to write ${configPath}: ${message}\n`)
   }
 
   return config
@@ -52,10 +52,10 @@ export function updateAT3Config(projectPath: string, addedFeatures: string[]): A
 
 function createDefaultConfig(): AT3Config {
   return {
-    version: '0.1.0',
     created: new Date().toISOString(),
     features: [],
     toolsUsed: ['at3-stack-kit'],
+    version: '0.1.0',
   }
 }
 
@@ -70,7 +70,7 @@ export function detectCreateAt3App(projectPath: string): boolean {
   }
 
   try {
-    const config = JSON.parse(require('fs').readFileSync(configPath, 'utf8'))
+    const config = JSON.parse(readFileSync(configPath, 'utf8'))
     return config.toolsUsed?.includes('create-at3-app')
   } catch {
     return false
@@ -86,7 +86,7 @@ export function suggestAT3Tools(projectInfo: ProjectInfo, addedFeatures: string[
   // Suggest at3-toolkit for development workflow optimization
   if (!(projectInfo.hasEslint && projectInfo.hasPrettier && projectInfo.hasVitest)) {
     suggestions.push(
-      `${colors.info('💡 Tip:')} Use ${style.command('@entro314-labs/at3t')} for advanced linting, testing, and development workflow optimization`
+      `${colors.info('💡 Tip:')} Use ${style.command('npx @entro314labs/at3-toolkit')} for advanced linting, testing, and migration workflows`
     )
   }
 
@@ -108,8 +108,11 @@ export function getPostMigrationWorkflow(
   addedFeatures: string[]
 ): string[] {
   const workflows: string[] = []
+  const hasAIFeature = addedFeatures.some(
+    (feature) => feature === 'ai' || feature.startsWith('ai-')
+  )
 
-  if (addedFeatures.includes('ai')) {
+  if (hasAIFeature) {
     workflows.push('Configure your AI provider API keys in .env.local')
     workflows.push('Explore the AI integration examples in your project')
   }
@@ -121,7 +124,7 @@ export function getPostMigrationWorkflow(
 
   if (addedFeatures.includes('testing')) {
     workflows.push(
-      `Run ${style.command(projectInfo.packageManager + ' test')} to verify your test setup`
+      `Run ${style.command(`${projectInfo.packageManager} test`)} to verify your test setup`
     )
   }
 

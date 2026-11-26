@@ -2,15 +2,18 @@
  * Add internationalization support to existing project
  */
 
-import { ensureDir, pathExists, readFile, writeFile } from 'fs-extra'
+import { ensureDir, readFile, writeFile } from 'fs-extra'
 import { join } from 'path'
+import { assertNextProject, resolveSourceRoot, usesSrcDirectory } from './project-paths.js'
 
 /**
  * Add internationalization support to existing project with next-intl v4
  */
 export async function addI18n(projectPath: string): Promise<void> {
-  const srcPath = join(projectPath, 'src')
-  await ensureDir(srcPath)
+  assertNextProject(projectPath, 'Internationalization')
+
+  const sourceRoot = resolveSourceRoot(projectPath)
+  await ensureDir(sourceRoot)
 
   // Create messages directory with sample translations
   const messagesPath = join(projectPath, 'messages')
@@ -18,16 +21,16 @@ export async function addI18n(projectPath: string): Promise<void> {
   await addDefaultMessages(messagesPath)
 
   // Create i18n configuration
-  const i18nPath = join(srcPath, 'lib', 'i18n')
+  const i18nPath = join(sourceRoot, 'lib', 'i18n')
   await ensureDir(i18nPath)
 
-  await addI18nConfig(i18nPath)
-  await addI18nRequest(i18nPath)
+  await addI18nConfig(projectPath, i18nPath)
+  await addI18nRequest(projectPath, i18nPath)
   await addI18nNavigation(i18nPath)
-  await addI18nMiddleware(srcPath)
+  await addI18nMiddleware(sourceRoot)
   await addLocaleProvider(i18nPath)
-  await addLanguageSwitcher(srcPath)
-  await addLocaleLayout(srcPath)
+  await addLanguageSwitcher(sourceRoot)
+  await addLocaleLayout(sourceRoot)
 
   // Update package.json
   await updatePackageJson(projectPath)
@@ -40,6 +43,17 @@ export async function addI18n(projectPath: string): Promise<void> {
 
 async function addDefaultMessages(messagesPath: string): Promise<void> {
   const enMessages = {
+    Auth: {
+      signIn: 'Sign In',
+      signOut: 'Sign Out',
+      signUp: 'Sign Up',
+      email: 'Email',
+      password: 'Password',
+      forgotPassword: 'Forgot password?',
+      rememberMe: 'Remember me',
+      noAccount: "Don't have an account?",
+      hasAccount: 'Already have an account?',
+    },
     Common: {
       loading: 'Loading...',
       error: 'An error occurred',
@@ -54,37 +68,18 @@ async function addDefaultMessages(messagesPath: string): Promise<void> {
       search: 'Search',
       noResults: 'No results found',
     },
-    Navigation: {
-      home: 'Home',
-      about: 'About',
-      contact: 'Contact',
-      dashboard: 'Dashboard',
-      settings: 'Settings',
-      profile: 'Profile',
-    },
-    Auth: {
-      signIn: 'Sign In',
-      signOut: 'Sign Out',
-      signUp: 'Sign Up',
-      email: 'Email',
-      password: 'Password',
-      forgotPassword: 'Forgot password?',
-      rememberMe: 'Remember me',
-      noAccount: "Don't have an account?",
-      hasAccount: 'Already have an account?',
-    },
-    Index: {
-      title: 'Welcome to AT3 Stack',
-      description: 'Build AI-native applications with edge deployment',
-      getStarted: 'Get Started',
-      learnMore: 'Learn More',
-    },
     Errors: {
       notFound: 'Page not found',
       notFoundDescription: 'The page you are looking for does not exist.',
       serverError: 'Server error',
       serverErrorDescription: 'Something went wrong on our end.',
       goHome: 'Go to home',
+    },
+    Index: {
+      title: 'Welcome to AT3 Stack',
+      description: 'Build AI-native applications with edge deployment',
+      getStarted: 'Get Started',
+      learnMore: 'Learn More',
     },
     LanguageSwitcher: {
       label: 'Language',
@@ -95,9 +90,28 @@ async function addDefaultMessages(messagesPath: string): Promise<void> {
       ja: '日本語',
       zh: '中文',
     },
+    Navigation: {
+      home: 'Home',
+      about: 'About',
+      contact: 'Contact',
+      dashboard: 'Dashboard',
+      settings: 'Settings',
+      profile: 'Profile',
+    },
   }
 
   const esMessages = {
+    Auth: {
+      signIn: 'Iniciar sesión',
+      signOut: 'Cerrar sesión',
+      signUp: 'Registrarse',
+      email: 'Correo electrónico',
+      password: 'Contraseña',
+      forgotPassword: '¿Olvidaste tu contraseña?',
+      rememberMe: 'Recordarme',
+      noAccount: '¿No tienes una cuenta?',
+      hasAccount: '¿Ya tienes una cuenta?',
+    },
     Common: {
       loading: 'Cargando...',
       error: 'Ocurrió un error',
@@ -112,37 +126,18 @@ async function addDefaultMessages(messagesPath: string): Promise<void> {
       search: 'Buscar',
       noResults: 'No se encontraron resultados',
     },
-    Navigation: {
-      home: 'Inicio',
-      about: 'Acerca de',
-      contact: 'Contacto',
-      dashboard: 'Panel',
-      settings: 'Configuración',
-      profile: 'Perfil',
-    },
-    Auth: {
-      signIn: 'Iniciar sesión',
-      signOut: 'Cerrar sesión',
-      signUp: 'Registrarse',
-      email: 'Correo electrónico',
-      password: 'Contraseña',
-      forgotPassword: '¿Olvidaste tu contraseña?',
-      rememberMe: 'Recordarme',
-      noAccount: '¿No tienes una cuenta?',
-      hasAccount: '¿Ya tienes una cuenta?',
-    },
-    Index: {
-      title: 'Bienvenido a AT3 Stack',
-      description: 'Construye aplicaciones nativas de IA con despliegue en el borde',
-      getStarted: 'Comenzar',
-      learnMore: 'Saber más',
-    },
     Errors: {
       notFound: 'Página no encontrada',
       notFoundDescription: 'La página que buscas no existe.',
       serverError: 'Error del servidor',
       serverErrorDescription: 'Algo salió mal de nuestro lado.',
       goHome: 'Ir al inicio',
+    },
+    Index: {
+      title: 'Bienvenido a AT3 Stack',
+      description: 'Construye aplicaciones nativas de IA con despliegue en el borde',
+      getStarted: 'Comenzar',
+      learnMore: 'Saber más',
     },
     LanguageSwitcher: {
       label: 'Idioma',
@@ -153,13 +148,22 @@ async function addDefaultMessages(messagesPath: string): Promise<void> {
       ja: '日本語',
       zh: '中文',
     },
+    Navigation: {
+      home: 'Inicio',
+      about: 'Acerca de',
+      contact: 'Contacto',
+      dashboard: 'Panel',
+      settings: 'Configuración',
+      profile: 'Perfil',
+    },
   }
 
   await writeFile(join(messagesPath, 'en.json'), JSON.stringify(enMessages, null, 2))
   await writeFile(join(messagesPath, 'es.json'), JSON.stringify(esMessages, null, 2))
 }
 
-async function addI18nConfig(i18nPath: string): Promise<void> {
+async function addI18nConfig(projectPath: string, i18nPath: string): Promise<void> {
+  const messagesImportPath = usesSrcDirectory(projectPath) ? '../../../messages' : '../../messages'
   const config = `import { getRequestConfig } from 'next-intl/server'
 import { hasLocale } from 'next-intl'
 import { routing } from './navigation'
@@ -173,14 +177,15 @@ export default getRequestConfig(async ({ requestLocale }) => {
 
   return {
     locale,
-    messages: (await import(\`../../../messages/\${locale}.json\`)).default,
+    messages: (await import(\`${messagesImportPath}/\${locale}.json\`)).default,
   }
 })
 `
   await writeFile(join(i18nPath, 'config.ts'), config)
 }
 
-async function addI18nRequest(i18nPath: string): Promise<void> {
+async function addI18nRequest(projectPath: string, i18nPath: string): Promise<void> {
+  const messagesImportPath = usesSrcDirectory(projectPath) ? '../../../messages' : '../../messages'
   const request = `import { getRequestConfig } from 'next-intl/server'
 import { routing } from './navigation'
 
@@ -195,7 +200,7 @@ export default getRequestConfig(async ({ requestLocale }) => {
 
   return {
     locale,
-    messages: (await import(\`../../../messages/\${locale}.json\`)).default,
+    messages: (await import(\`${messagesImportPath}/\${locale}.json\`)).default,
     timeZone: 'UTC',
     now: new Date(),
   }
@@ -482,9 +487,11 @@ export default function NotFoundPage() {
 
 async function updatePackageJson(projectPath: string): Promise<void> {
   const packageJsonPath = join(projectPath, 'package.json')
-  const packageJson = JSON.parse(await readFile(packageJsonPath, 'utf-8'))
+  const packageJson = JSON.parse(await readFile(packageJsonPath, 'utf8'))
 
-  if (!packageJson.dependencies) packageJson.dependencies = {}
+  if (!packageJson.dependencies) {
+    packageJson.dependencies = {}
+  }
 
   packageJson.dependencies['next-intl'] = '^4.5.5'
 
@@ -493,9 +500,12 @@ async function updatePackageJson(projectPath: string): Promise<void> {
 
 async function updateNextConfig(projectPath: string): Promise<void> {
   const configPath = join(projectPath, 'next.config.ts')
+  const requestConfigPath = usesSrcDirectory(projectPath)
+    ? './src/lib/i18n/request.ts'
+    : './lib/i18n/request.ts'
 
   try {
-    let configContent = await readFile(configPath, 'utf-8')
+    let configContent = await readFile(configPath, 'utf8')
 
     // Check if already configured
     if (configContent.includes('withNextIntl') || configContent.includes('next-intl/plugin')) {
@@ -504,7 +514,7 @@ async function updateNextConfig(projectPath: string): Promise<void> {
 
     // Add import at the top
     const importStatement = `import createNextIntlPlugin from 'next-intl/plugin'\n`
-    const pluginInit = `const withNextIntl = createNextIntlPlugin('./src/lib/i18n/request.ts')\n\n`
+    const pluginInit = `const withNextIntl = createNextIntlPlugin('${requestConfigPath}')\n\n`
 
     // Add import
     if (!configContent.includes('next-intl/plugin')) {
@@ -512,14 +522,14 @@ async function updateNextConfig(projectPath: string): Promise<void> {
     }
 
     // Find export default and wrap it
-    const exportDefaultRegex = /export\s+default\s+(\w+);?\s*$/m
+    const exportDefaultRegex = /export\s+default\s+([^\n;]+);?\s*$/m
     const match = configContent.match(exportDefaultRegex)
 
     if (match) {
-      const configName = match[1]
+      const configExpression = match[1]?.trim()
       configContent = configContent.replace(
         exportDefaultRegex,
-        `${pluginInit}export default withNextIntl(${configName})\n`
+        `${pluginInit}export default withNextIntl(${configExpression})\n`
       )
     } else {
       // If no simple export found, try to handle inline exports
@@ -535,7 +545,7 @@ async function updateNextConfig(projectPath: string): Promise<void> {
     }
 
     await writeFile(configPath, configContent)
-  } catch (error) {
+  } catch {
     console.warn(
       'Could not update next.config.ts automatically. Please wrap your config with withNextIntl manually.'
     )

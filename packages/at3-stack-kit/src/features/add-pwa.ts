@@ -4,13 +4,18 @@
 
 import { join } from 'node:path'
 import { ensureDir, pathExists, readFile, writeFile } from 'fs-extra'
+import { assertNextProject, resolveAppRoot, resolveSourceRoot } from './project-paths.js'
 
 export async function addPWA(projectPath: string): Promise<void> {
-  const srcPath = join(projectPath, 'src')
+  assertNextProject(projectPath, 'PWA support')
+
+  const sourceRoot = resolveSourceRoot(projectPath)
+  const appRoot = resolveAppRoot(projectPath)
   const publicPath = join(projectPath, 'public')
 
   await ensureDir(publicPath)
   await ensureDir(join(publicPath, 'icons'))
+  await addIcons(publicPath)
 
   // Add manifest.json
   await addManifest(publicPath)
@@ -19,16 +24,16 @@ export async function addPWA(projectPath: string): Promise<void> {
   await addServiceWorker(publicPath)
 
   // Add offline page
-  await addOfflinePage(srcPath)
+  await addOfflinePage(appRoot)
 
   // Add PWA hooks and utilities
-  await addPWAUtils(srcPath)
+  await addPWAUtils(sourceRoot)
 
   // Add install prompt component
-  await addInstallPrompt(srcPath)
+  await addInstallPrompt(sourceRoot)
 
   // Add PWA provider
-  await addPWAProvider(srcPath)
+  await addPWAProvider(sourceRoot)
 
   // Update package.json
   await updatePackageJson(projectPath)
@@ -36,100 +41,50 @@ export async function addPWA(projectPath: string): Promise<void> {
   // Update next.config.ts
   await updateNextConfig(projectPath)
 
-  // Update layout to include PWA meta tags
-  await updateLayout(srcPath)
+  // Update layout to wire the provider and manifest into the live app shell
+  await updateLayout(appRoot, sourceRoot)
 
   console.log('✓ PWA support added')
 }
 
+async function addIcons(publicPath: string): Promise<void> {
+  const icon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="AT3">
+  <rect width="512" height="512" rx="96" fill="#111827"/>
+  <path d="M144 352h224L256 112 144 352Z" fill="#f9fafb"/>
+  <path d="M207 280h98l-49-105-49 105Z" fill="#6366f1"/>
+</svg>
+`
+  const badge = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-label="AT3">
+  <rect width="96" height="96" rx="20" fill="#111827"/>
+  <path d="M24 68h48L48 20 24 68Z" fill="#f9fafb"/>
+</svg>
+`
+
+  await writeFile(join(publicPath, 'icons', 'icon.svg'), icon)
+  await writeFile(join(publicPath, 'icons', 'badge.svg'), badge)
+}
+
 async function addManifest(publicPath: string): Promise<void> {
   const manifest = {
-    name: 'AT3 App',
-    short_name: 'AT3',
-    description: 'AT3 Stack Application - AI-native, edge-first',
-    start_url: '/',
-    display: 'standalone',
     background_color: '#ffffff',
-    theme_color: '#6366f1',
-    orientation: 'portrait-primary',
-    scope: '/',
-    lang: 'en',
     categories: ['productivity', 'utilities'],
+    description: 'AT3 Stack Application - AI-native, edge-first',
+    display: 'standalone',
     icons: [
       {
-        src: '/icons/icon-72x72.png',
-        sizes: '72x72',
-        type: 'image/png',
-        purpose: 'any',
-      },
-      {
-        src: '/icons/icon-96x96.png',
-        sizes: '96x96',
-        type: 'image/png',
-        purpose: 'any',
-      },
-      {
-        src: '/icons/icon-128x128.png',
-        sizes: '128x128',
-        type: 'image/png',
-        purpose: 'any',
-      },
-      {
-        src: '/icons/icon-144x144.png',
-        sizes: '144x144',
-        type: 'image/png',
-        purpose: 'any',
-      },
-      {
-        src: '/icons/icon-152x152.png',
-        sizes: '152x152',
-        type: 'image/png',
-        purpose: 'any',
-      },
-      {
-        src: '/icons/icon-192x192.png',
-        sizes: '192x192',
-        type: 'image/png',
-        purpose: 'maskable',
-      },
-      {
-        src: '/icons/icon-384x384.png',
-        sizes: '384x384',
-        type: 'image/png',
-        purpose: 'any',
-      },
-      {
-        src: '/icons/icon-512x512.png',
-        sizes: '512x512',
-        type: 'image/png',
-        purpose: 'maskable',
+        src: '/icons/icon.svg',
+        sizes: 'any',
+        type: 'image/svg+xml',
+        purpose: 'any maskable',
       },
     ],
-    screenshots: [
-      {
-        src: '/screenshots/desktop.png',
-        sizes: '1280x720',
-        type: 'image/png',
-        form_factor: 'wide',
-        label: 'Desktop view',
-      },
-      {
-        src: '/screenshots/mobile.png',
-        sizes: '750x1334',
-        type: 'image/png',
-        form_factor: 'narrow',
-        label: 'Mobile view',
-      },
-    ],
-    shortcuts: [
-      {
-        name: 'Dashboard',
-        short_name: 'Dashboard',
-        description: 'Go to dashboard',
-        url: '/dashboard',
-        icons: [{ src: '/icons/dashboard-96x96.png', sizes: '96x96' }],
-      },
-    ],
+    lang: 'en',
+    name: 'AT3 App',
+    orientation: 'portrait-primary',
+    scope: '/',
+    short_name: 'AT3',
+    start_url: '/',
+    theme_color: '#6366f1',
   }
 
   await writeFile(join(publicPath, 'manifest.json'), JSON.stringify(manifest, null, 2))
@@ -252,8 +207,8 @@ self.addEventListener('push', (event) => {
   const data = event.data.json()
   const options = {
     body: data.body || 'New notification',
-    icon: '/icons/icon-192x192.png',
-    badge: '/icons/badge-72x72.png',
+    icon: '/icons/icon.svg',
+    badge: '/icons/badge.svg',
     vibrate: [100, 50, 100],
     data: {
       url: data.url || '/',
@@ -303,11 +258,13 @@ async function syncData() {
   await writeFile(join(publicPath, 'sw.js'), serviceWorker)
 }
 
-async function addOfflinePage(srcPath: string): Promise<void> {
-  const offlinePath = join(srcPath, 'app', 'offline')
+async function addOfflinePage(appRoot: string): Promise<void> {
+  const offlinePath = join(appRoot, 'offline')
   await ensureDir(offlinePath)
 
-  const offlinePage = `export default function OfflinePage() {
+  const offlinePage = `'use client'
+
+export default function OfflinePage() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-24 bg-background text-foreground">
       <div className="text-center">
@@ -622,7 +579,7 @@ export function InstallPrompt({
       <div className="bg-background border border-border rounded-lg shadow-lg p-4">
         <div className="flex items-start gap-4">
           <div className="shrink-0">
-            <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center"
+            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
               <svg
                 className="h-6 w-6 text-primary"
                 fill="none"
@@ -741,9 +698,11 @@ export function PWAProvider({ children }: PWAProviderProps) {
 
 async function updatePackageJson(projectPath: string): Promise<void> {
   const packageJsonPath = join(projectPath, 'package.json')
-  const packageJson = JSON.parse(await readFile(packageJsonPath, 'utf-8'))
+  const packageJson = JSON.parse(await readFile(packageJsonPath, 'utf8'))
 
-  if (!packageJson.dependencies) packageJson.dependencies = {}
+  if (!packageJson.dependencies) {
+    packageJson.dependencies = {}
+  }
 
   // Using @ducanh2912/next-pwa for better App Router support
   packageJson.dependencies['@ducanh2912/next-pwa'] = '^10.2.9'
@@ -752,13 +711,24 @@ async function updatePackageJson(projectPath: string): Promise<void> {
 }
 
 async function updateNextConfig(projectPath: string): Promise<void> {
-  const configPath = join(projectPath, 'next.config.ts')
+  const configPath = await resolveNextConfigPath(projectPath)
 
   try {
-    let configContent = await readFile(configPath, 'utf-8')
+    let configContent = ''
+
+    if (await pathExists(configPath)) {
+      configContent = await readFile(configPath, 'utf8')
+    } else {
+      configContent = `const nextConfig = {}
+
+export default nextConfig
+`
+    }
 
     // Check if already configured
-    if (configContent.includes('withPWA')) return
+    if (configContent.includes('withPWA')) {
+      return
+    }
 
     // Add import
     const importStatement = `import withPWAInit from "@ducanh2912/next-pwa"\n`
@@ -806,16 +776,16 @@ const withPWA = withPWAInit({
     }
 
     await writeFile(configPath, configContent)
-  } catch (error) {
+  } catch {
     console.warn(
       'Could not update next.config.ts automatically. Please wrap your config with withPWA manually.'
     )
   }
 }
 
-async function updateLayout(srcPath: string): Promise<void> {
+async function updateLayout(appRoot: string, sourceRoot: string): Promise<void> {
   // Add PWA meta tags component
-  const componentsPath = join(srcPath, 'components', 'pwa')
+  const componentsPath = join(sourceRoot, 'components', 'pwa')
   await ensureDir(componentsPath)
 
   const pwaMeta = `import type { Metadata, Viewport } from 'next'
@@ -947,4 +917,97 @@ export { UpdateNotification } from './update-notification'
 export { OfflineIndicator } from './offline-indicator'
 `
   await writeFile(join(componentsPath, 'index.ts'), index)
+
+  const layoutPath = join(appRoot, 'layout.tsx')
+  const defaultLayout = `import { PWAProvider, InstallPrompt } from '@/lib/pwa'
+import { OfflineIndicator, UpdateNotification } from '@/components/pwa'
+import type { ReactNode } from 'react'
+
+export default function RootLayout({ children }: { children: ReactNode }) {
+  return (
+    <html lang="en">
+      <head>
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#6366f1" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+      </head>
+      <body>
+        <PWAProvider>
+          {children}
+          <InstallPrompt />
+          <OfflineIndicator />
+          <UpdateNotification />
+        </PWAProvider>
+      </body>
+    </html>
+  )
+}
+`
+
+  if (!(await pathExists(layoutPath))) {
+    await ensureDir(appRoot)
+    await writeFile(layoutPath, defaultLayout)
+    return
+  }
+
+  let layoutContent = await readFile(layoutPath, 'utf8')
+
+  if (!layoutContent.includes(`@/lib/pwa`)) {
+    layoutContent = `import { PWAProvider, InstallPrompt } from '@/lib/pwa'\n${layoutContent}`
+  }
+
+  if (!layoutContent.includes(`@/components/pwa`)) {
+    layoutContent = `import { OfflineIndicator, UpdateNotification } from '@/components/pwa'\n${layoutContent}`
+  }
+
+  if (layoutContent.includes('<head />')) {
+    layoutContent = layoutContent.replace('<head />', getPWAHeadMarkup())
+  } else if (!layoutContent.includes('rel="manifest"')) {
+    if (layoutContent.includes('<head>')) {
+      layoutContent = layoutContent.replace('<head>', `<head>\n${getPWAHeadInnerMarkup()}`)
+    } else {
+      layoutContent = layoutContent.replace(/<html([^>]*)>/, `<html$1>\n      ${getPWAHeadMarkup()}`)
+    }
+  }
+
+  if (!layoutContent.includes('<PWAProvider>')) {
+    layoutContent = layoutContent.replace(/<body([^>]*)>/, '<body$1>\n        <PWAProvider>')
+    layoutContent = layoutContent.replace(
+      '</body>',
+      `          <InstallPrompt />
+          <OfflineIndicator />
+          <UpdateNotification />
+        </PWAProvider>
+      </body>`
+    )
+  }
+
+  await writeFile(layoutPath, layoutContent)
+}
+
+async function resolveNextConfigPath(projectPath: string): Promise<string> {
+  const supportedPaths = ['next.config.ts', 'next.config.mjs', 'next.config.js']
+
+  for (const candidate of supportedPaths) {
+    const candidatePath = join(projectPath, candidate)
+    if (await pathExists(candidatePath)) {
+      return candidatePath
+    }
+  }
+
+  return join(projectPath, 'next.config.ts')
+}
+
+function getPWAHeadInnerMarkup() {
+  return `        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#6366f1" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />\n`
+}
+
+function getPWAHeadMarkup() {
+  return `<head>
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#6366f1" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+      </head>`
 }

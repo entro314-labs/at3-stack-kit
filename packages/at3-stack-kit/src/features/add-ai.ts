@@ -4,13 +4,16 @@
 
 import { join } from 'node:path'
 import { ensureDir, pathExists, readFile, writeFile } from 'fs-extra'
+import { assertNextProject, resolveSourceRoot } from './project-paths.js'
 
 export async function addAI(type: 'custom' | 'vercel', projectPath: string): Promise<void> {
-  const srcPath = join(projectPath, 'src')
-  await ensureDir(srcPath)
+  assertNextProject(projectPath, 'AI integration')
+
+  const sourceRoot = resolveSourceRoot(projectPath)
+  await ensureDir(sourceRoot)
 
   // Create lib/ai directory
-  const aiPath = join(srcPath, 'lib', 'ai')
+  const aiPath = join(sourceRoot, 'lib', 'ai')
   await ensureDir(aiPath)
 
   if (type === 'custom') {
@@ -22,7 +25,7 @@ export async function addAI(type: 'custom' | 'vercel', projectPath: string): Pro
   }
 
   // Create API routes
-  const apiPath = join(srcPath, 'app', 'api')
+  const apiPath = join(sourceRoot, 'app', 'api')
   await ensureDir(apiPath)
 
   await addAPIRoutes(apiPath, type)
@@ -259,11 +262,15 @@ export async function POST(req: Request) {
 async function updatePackageJson(projectPath: string, type: 'custom' | 'vercel'): Promise<void> {
   const packageJsonPath = join(projectPath, 'package.json')
 
-  if (!(await pathExists(packageJsonPath))) return
+  if (!(await pathExists(packageJsonPath))) {
+    return
+  }
 
-  const packageJson = JSON.parse(await readFile(packageJsonPath, 'utf-8'))
+  const packageJson = JSON.parse(await readFile(packageJsonPath, 'utf8'))
 
-  if (!packageJson.dependencies) packageJson.dependencies = {}
+  if (!packageJson.dependencies) {
+    packageJson.dependencies = {}
+  }
 
   if (type === 'vercel') {
     packageJson.dependencies.ai = '^5.0.104'

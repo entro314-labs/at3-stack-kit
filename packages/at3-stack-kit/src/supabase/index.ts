@@ -2,14 +2,14 @@
  * Supabase utilities for AT3 Stack
  */
 
-import { createClient, type SupabaseClient } from '@supabase/supabase-js'
+import { type SupabaseClient, createClient } from '@supabase/supabase-js'
 import { z } from 'zod'
 
 // Supabase configuration schema
 export const supabaseConfigSchema = z.object({
-  url: z.string().url(),
   anonKey: z.string(),
   serviceRoleKey: z.string().optional(),
+  url: z.string().url(),
 })
 
 export type SupabaseConfig = z.infer<typeof supabaseConfigSchema>
@@ -54,9 +54,9 @@ export function createSupabaseAdminClient(config: SupabaseConfig): SupabaseClien
  */
 export function getSupabaseConfigFromEnv(): SupabaseConfig {
   const config = {
-    url: process.env.NEXT_PUBLIC_SUPABASE_URL,
     anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
+    url: process.env.NEXT_PUBLIC_SUPABASE_URL,
   }
 
   if (!(config.url && config.anonKey)) {

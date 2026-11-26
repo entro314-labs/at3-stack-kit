@@ -10,11 +10,6 @@ export type AIProvider = z.infer<typeof aiProviderSchema>
 
 // Common AI model configurations
 export const AI_MODELS = {
-  openai: {
-    'gpt-4-turbo': { name: 'GPT-4 Turbo', maxTokens: 4096 },
-    'gpt-4': { name: 'GPT-4', maxTokens: 8192 },
-    'gpt-3.5-turbo': { name: 'GPT-3.5 Turbo', maxTokens: 4096 },
-  },
   anthropic: {
     'claude-3-opus': { name: 'Claude 3 Opus', maxTokens: 4096 },
     'claude-3-sonnet': { name: 'Claude 3 Sonnet', maxTokens: 4096 },
@@ -24,6 +19,11 @@ export const AI_MODELS = {
     'gemini-pro': { name: 'Gemini Pro', maxTokens: 2048 },
     'gemini-pro-vision': { name: 'Gemini Pro Vision', maxTokens: 2048 },
   },
+  openai: {
+    'gpt-4-turbo': { name: 'GPT-4 Turbo', maxTokens: 4096 },
+    'gpt-4': { name: 'GPT-4', maxTokens: 8192 },
+    'gpt-3.5-turbo': { name: 'GPT-3.5 Turbo', maxTokens: 4096 },
+  },
 } as const
 
 export type AIModelKey = {
@@ -32,11 +32,11 @@ export type AIModelKey = {
 
 // AI configuration schema
 export const aiConfigSchema = z.object({
-  provider: aiProviderSchema,
-  model: z.string(),
-  temperature: z.number().min(0).max(2).default(0.7),
-  maxTokens: z.number().min(1).max(8192).default(1000),
   apiKey: z.string().optional(),
+  maxTokens: z.number().min(1).max(8192).default(1000),
+  model: z.string(),
+  provider: aiProviderSchema,
+  temperature: z.number().min(0).max(2).default(0.7),
 })
 
 export type AIConfig = z.infer<typeof aiConfigSchema>
@@ -68,16 +68,16 @@ export function validateAIConfig(config: unknown): AIConfig {
  */
 export function getDefaultAIConfig(provider: AIProvider = 'openai'): AIConfig {
   const defaultModels = {
-    openai: 'gpt-3.5-turbo',
     anthropic: 'claude-3-haiku',
     google: 'gemini-pro',
+    openai: 'gpt-3.5-turbo',
   }
 
   return {
-    provider,
-    model: defaultModels[provider],
-    temperature: 0.7,
     maxTokens: 1000,
+    model: defaultModels[provider],
+    provider,
+    temperature: 0.7,
   }
 }
 

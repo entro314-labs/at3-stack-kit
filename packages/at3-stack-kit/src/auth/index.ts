@@ -6,11 +6,11 @@ import { z } from 'zod'
 
 // User schema
 export const userSchema = z.object({
-  id: z.string(),
-  email: z.string().email(),
-  name: z.string().optional(),
   avatar_url: z.string().url().optional(),
   created_at: z.string(),
+  email: z.string().email(),
+  id: z.string(),
+  name: z.string().optional(),
   updated_at: z.string(),
 })
 
@@ -18,16 +18,16 @@ export type User = z.infer<typeof userSchema>
 
 // Auth session schema
 export const sessionSchema = z.object({
-  user: userSchema,
   access_token: z.string(),
-  refresh_token: z.string().optional(),
   expires_at: z.number().optional(),
+  refresh_token: z.string().optional(),
+  user: userSchema,
 })
 
 export type AuthSession = z.infer<typeof sessionSchema>
 
 // Auth error types
-export type AuthError = {
+export interface AuthError {
   message: string
   status?: number
 }
@@ -79,7 +79,9 @@ export function getUserDisplayName(user: User): string {
  * Check if session is expired
  */
 export function isSessionExpired(session: AuthSession): boolean {
-  if (!session.expires_at) return false
+  if (!session.expires_at) {
+    return false
+  }
   return Date.now() >= session.expires_at * 1000
 }
 
@@ -87,7 +89,9 @@ export function isSessionExpired(session: AuthSession): boolean {
  * Time until session expires (in milliseconds)
  */
 export function getSessionTimeToExpiry(session: AuthSession): number | null {
-  if (!session.expires_at) return null
+  if (!session.expires_at) {
+    return null
+  }
   return Math.max(0, session.expires_at * 1000 - Date.now())
 }
 

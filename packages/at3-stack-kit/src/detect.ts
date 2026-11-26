@@ -4,7 +4,7 @@
  */
 
 import { detect as detectPackageManager } from 'detect-package-manager'
-import { existsSync, readdirSync, readFileSync } from 'fs-extra'
+import { existsSync, readFileSync, readdirSync } from 'fs-extra'
 import { join } from 'path'
 
 export type ProjectType =
@@ -76,7 +76,7 @@ export async function detectProjectType(projectPath: string): Promise<ProjectTyp
   }
 
   try {
-    const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'))
+    const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8'))
     const deps = { ...packageJson.dependencies, ...packageJson.devDependencies }
 
     // Check for AIT3E stack (AI + T3 + Edge)
@@ -99,26 +99,38 @@ export async function detectProjectType(projectPath: string): Promise<ProjectTyp
     }
 
     // Check for Next.js
-    if (deps.next) return 'nextjs'
+    if (deps.next) {
+      return 'nextjs'
+    }
 
     // Check for Nuxt
-    if (deps.nuxt || deps['@nuxt/core']) return 'nuxt'
+    if (deps.nuxt || deps['@nuxt/core']) {
+      return 'nuxt'
+    }
 
     // Check for Vue
-    if (deps.vue) return 'vue'
+    if (deps.vue) {
+      return 'vue'
+    }
 
     // Check for React
-    if (deps.react) return 'react'
+    if (deps.react) {
+      return 'react'
+    }
 
     // Check for Vite
-    if (deps.vite) return 'vite'
+    if (deps.vite) {
+      return 'vite'
+    }
 
     // Check for Webpack
-    if (deps.webpack) return 'webpack'
+    if (deps.webpack) {
+      return 'webpack'
+    }
 
     // Default to Node.js
     return 'node'
-  } catch (error) {
+  } catch {
     return 'unknown'
   }
 }
@@ -137,7 +149,7 @@ export async function analyzeProject(projectPath: string): Promise<ProjectInfo> 
     throw new Error('No package.json found. This does not appear to be a Node.js project.')
   }
 
-  const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'))
+  const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8'))
 
   // Use sophisticated package manager detection with fallback
   let packageManager: ProjectInfo['packageManager'] = 'npm'
@@ -145,9 +157,13 @@ export async function analyzeProject(projectPath: string): Promise<ProjectInfo> 
     packageManager = (await detectPackageManager({ cwd: projectPath })) as any
   } catch {
     // Fallback to file-based detection
-    if (existsSync(join(projectPath, 'pnpm-lock.yaml'))) packageManager = 'pnpm'
-    else if (existsSync(join(projectPath, 'yarn.lock'))) packageManager = 'yarn'
-    else if (existsSync(join(projectPath, 'bun.lockb'))) packageManager = 'bun'
+    if (existsSync(join(projectPath, 'pnpm-lock.yaml'))) {
+      packageManager = 'pnpm'
+    } else if (existsSync(join(projectPath, 'yarn.lock'))) {
+      packageManager = 'yarn'
+    } else if (existsSync(join(projectPath, 'bun.lockb'))) {
+      packageManager = 'bun'
+    }
   }
 
   // Analyze dependencies with detailed structure
@@ -186,32 +202,32 @@ export async function analyzeProject(projectPath: string): Promise<ProjectInfo> 
   const hasPlaywright = testing.e2e === 'playwright'
 
   return {
-    path: projectPath,
-    type: await detectProjectType(projectPath),
-    hasNextjs,
-    hasReact,
-    hasVue,
-    hasTypeScript,
-    hasTailwind,
-    hasTRPC,
-    hasSupabase,
-    hasAI,
-    hasPWA,
-    hasI18n,
-    hasVitest,
-    hasPlaywright,
-    hasEslint,
-    hasPrettier,
-    hasBiome,
-    hasEdgeRuntime,
-    hasVectorDB,
-    hasDrizzle,
-    hasPrisma,
     authProvider,
-    testing,
-    packageManager,
-    dependencies,
     configFiles,
+    dependencies,
+    hasAI,
+    hasBiome,
+    hasDrizzle,
+    hasEdgeRuntime,
+    hasEslint,
+    hasI18n,
+    hasNextjs,
+    hasPWA,
+    hasPlaywright,
+    hasPrettier,
+    hasPrisma,
+    hasReact,
+    hasSupabase,
+    hasTRPC,
+    hasTailwind,
+    hasTypeScript,
+    hasVectorDB,
+    hasVitest,
+    hasVue,
+    packageManager,
+    path: projectPath,
+    testing,
+    type: await detectProjectType(projectPath),
   }
 }
 
@@ -229,15 +245,15 @@ async function analyzeDependencies(
     for (const [name, version] of Object.entries(packageJson.dependencies)) {
       const info: DependencyInfo = {
         name,
-        version: version as string,
         type: 'dependency',
+        version: version as string,
       }
 
       // Try to get installed version
       try {
         const installedPkgPath = join(projectPath, 'node_modules', name, 'package.json')
         if (existsSync(installedPkgPath)) {
-          const installedPkg = JSON.parse(readFileSync(installedPkgPath, 'utf-8'))
+          const installedPkg = JSON.parse(readFileSync(installedPkgPath, 'utf8'))
           info.current = installedPkg.version
         }
       } catch {
@@ -253,14 +269,14 @@ async function analyzeDependencies(
     for (const [name, version] of Object.entries(packageJson.devDependencies)) {
       const info: DependencyInfo = {
         name,
-        version: version as string,
         type: 'devDependency',
+        version: version as string,
       }
 
       try {
         const installedPkgPath = join(projectPath, 'node_modules', name, 'package.json')
         if (existsSync(installedPkgPath)) {
-          const installedPkg = JSON.parse(readFileSync(installedPkgPath, 'utf-8'))
+          const installedPkg = JSON.parse(readFileSync(installedPkgPath, 'utf8'))
           info.current = installedPkg.version
         }
       } catch {
@@ -276,8 +292,8 @@ async function analyzeDependencies(
     for (const [name, version] of Object.entries(packageJson.peerDependencies)) {
       deps.push({
         name,
-        version: version as string,
         type: 'peerDependency',
+        version: version as string,
       })
     }
   }
@@ -472,7 +488,9 @@ function detectEdgeRuntime(projectPath: string): boolean {
  */
 function hasSupabaseVectorConfig(projectPath: string): boolean {
   const supabaseMigrationDir = join(projectPath, 'supabase', 'migrations')
-  if (!existsSync(supabaseMigrationDir)) return false
+  if (!existsSync(supabaseMigrationDir)) {
+    return false
+  }
 
   try {
     const migrationFiles = readdirSync(supabaseMigrationDir)
@@ -480,7 +498,11 @@ function hasSupabaseVectorConfig(projectPath: string): boolean {
     return migrationFiles.some((file: string) => {
       if (file.endsWith('.sql')) {
         const content = readFileSync(join(supabaseMigrationDir, file), 'utf8')
-        return content.includes('vector') || content.includes('embedding') || content.includes('pgvector')
+        return (
+          content.includes('vector') ||
+          content.includes('embedding') ||
+          content.includes('pgvector')
+        )
       }
       return false
     })
@@ -527,7 +549,9 @@ function detectAuthProvider(dependencies: DependencyInfo[], projectPath: string)
     const hasAuthConfig =
       existsSync(join(projectPath, 'src/lib/supabase')) ||
       existsSync(join(projectPath, 'lib/supabase'))
-    if (hasAuthConfig) return 'supabase'
+    if (hasAuthConfig) {
+      return 'supabase'
+    }
   }
 
   // Clerk
@@ -616,13 +640,16 @@ function detectTesting(dependencies: DependencyInfo[]): TestingInfo {
 
   // E2E testing
   let e2e: TestingInfo['e2e'] = 'none'
-  if (hasDependency(dependencies, '@playwright/test') || hasDependency(dependencies, 'playwright')) {
+  if (
+    hasDependency(dependencies, '@playwright/test') ||
+    hasDependency(dependencies, 'playwright')
+  ) {
     e2e = 'playwright'
   } else if (hasDependency(dependencies, 'cypress')) {
     e2e = 'cypress'
   }
 
-  return { unit, e2e }
+  return { e2e, unit }
 }
 
 /**
@@ -655,14 +682,30 @@ function getAllFiles(dirPath: string, extensions: string[]): string[] {
 export function getMissingFeatures(info: ProjectInfo): string[] {
   const missing: string[] = []
 
-  if (!info.hasSupabase && !info.hasDrizzle && !info.hasPrisma) missing.push('database')
-  if (!info.hasAI) missing.push('ai')
-  if (!info.hasPWA) missing.push('pwa')
-  if (!info.hasI18n) missing.push('i18n')
-  if (info.testing.unit === 'none') missing.push('testing')
-  if (!info.hasTailwind) missing.push('tailwind')
-  if (!info.hasTypeScript) missing.push('typescript')
-  if (info.authProvider === 'none') missing.push('auth')
+  if (!info.hasSupabase && !info.hasDrizzle && !info.hasPrisma) {
+    missing.push('database')
+  }
+  if (!info.hasAI) {
+    missing.push('ai')
+  }
+  if (!info.hasPWA) {
+    missing.push('pwa')
+  }
+  if (!info.hasI18n) {
+    missing.push('i18n')
+  }
+  if (info.testing.unit === 'none') {
+    missing.push('testing')
+  }
+  if (!info.hasTailwind) {
+    missing.push('tailwind')
+  }
+  if (!info.hasTypeScript) {
+    missing.push('typescript')
+  }
+  if (info.authProvider === 'none') {
+    missing.push('auth')
+  }
 
   return missing
 }
@@ -672,10 +715,14 @@ export function getMissingFeatures(info: ProjectInfo): string[] {
  */
 export function isCompatible(info: ProjectInfo): boolean {
   // Must have Next.js or React
-  if (!(info.hasNextjs || info.hasReact)) return false
+  if (!(info.hasNextjs || info.hasReact)) {
+    return false
+  }
 
   // Must have a supported package manager
-  if (!['npm', 'pnpm', 'yarn', 'bun'].includes(info.packageManager)) return false
+  if (!['npm', 'pnpm', 'yarn', 'bun'].includes(info.packageManager)) {
+    return false
+  }
 
   return true
 }
@@ -692,56 +739,56 @@ export function getRecommendations(info: ProjectInfo): {
 
   if (!info.hasTypeScript) {
     recommendations.push({
-      priority: 'high' as const,
       feature: 'typescript',
+      priority: 'high' as const,
       reason: 'TypeScript provides better development experience and type safety',
     })
   }
 
   if (!info.hasTailwind) {
     recommendations.push({
-      priority: 'high' as const,
       feature: 'tailwind',
+      priority: 'high' as const,
       reason: 'Tailwind CSS is essential for AT3 stack styling',
     })
   }
 
   if (!info.hasSupabase && !info.hasDrizzle && !info.hasPrisma) {
     recommendations.push({
-      priority: 'high' as const,
       feature: 'database',
+      priority: 'high' as const,
       reason: 'A database solution is needed for most applications',
     })
   }
 
   if (info.authProvider === 'none') {
     recommendations.push({
-      priority: 'medium' as const,
       feature: 'auth',
+      priority: 'medium' as const,
       reason: 'Authentication is essential for user management',
     })
   }
 
   if (!info.hasAI) {
     recommendations.push({
-      priority: 'medium' as const,
       feature: 'ai',
+      priority: 'medium' as const,
       reason: 'AI integration is a core feature of AT3 stack',
     })
   }
 
   if (info.testing.unit === 'none') {
     recommendations.push({
-      priority: 'low' as const,
       feature: 'testing',
+      priority: 'low' as const,
       reason: 'Comprehensive testing improves code quality',
     })
   }
 
   if (!info.hasBiome && (info.hasEslint || info.hasPrettier)) {
     recommendations.push({
-      priority: 'low' as const,
       feature: 'biome',
+      priority: 'low' as const,
       reason: 'Biome provides faster linting and formatting than ESLint/Prettier',
     })
   }
@@ -761,24 +808,48 @@ export function getAT3Score(info: ProjectInfo): {
   let score = 0
   const maxScore = 10
 
-  if (info.hasNextjs) score += 1
-  if (info.hasTypeScript) score += 1
-  if (info.hasTailwind) score += 1
-  if (info.hasSupabase || info.hasDrizzle || info.hasPrisma) score += 1
-  if (info.authProvider !== 'none') score += 1
-  if (info.hasAI) score += 2
-  if (info.hasEdgeRuntime) score += 1
-  if (info.testing.unit !== 'none') score += 1
-  if (info.hasBiome) score += 1
+  if (info.hasNextjs) {
+    score += 1
+  }
+  if (info.hasTypeScript) {
+    score += 1
+  }
+  if (info.hasTailwind) {
+    score += 1
+  }
+  if (info.hasSupabase || info.hasDrizzle || info.hasPrisma) {
+    score += 1
+  }
+  if (info.authProvider !== 'none') {
+    score += 1
+  }
+  if (info.hasAI) {
+    score += 2
+  }
+  if (info.hasEdgeRuntime) {
+    score += 1
+  }
+  if (info.testing.unit !== 'none') {
+    score += 1
+  }
+  if (info.hasBiome) {
+    score += 1
+  }
 
   const percentage = Math.round((score / maxScore) * 100)
 
   let level: 'none' | 'basic' | 'intermediate' | 'advanced' | 'full'
-  if (percentage === 0) level = 'none'
-  else if (percentage < 30) level = 'basic'
-  else if (percentage < 60) level = 'intermediate'
-  else if (percentage < 90) level = 'advanced'
-  else level = 'full'
+  if (percentage === 0) {
+    level = 'none'
+  } else if (percentage < 30) {
+    level = 'basic'
+  } else if (percentage < 60) {
+    level = 'intermediate'
+  } else if (percentage < 90) {
+    level = 'advanced'
+  } else {
+    level = 'full'
+  }
 
-  return { score, maxScore, percentage, level }
+  return { level, maxScore, percentage, score }
 }

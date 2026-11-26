@@ -32,41 +32,50 @@ export const gradients = {
 
 // Icons and symbols
 export const symbols = {
-  success: colors.success(figures.tick),
-  error: colors.error(figures.cross),
-  warning: colors.warning(figures.warning),
-  info: colors.info(figures.info),
+  ai: colors.ai('🤖'),
   arrow: colors.muted(figures.arrowRight),
   bullet: colors.muted(figures.bullet),
-  line: colors.muted(figures.line),
-  ai: colors.ai('🤖'),
-  stack: colors.primary('📚'),
-  edge: colors.secondary('⚡'),
-  database: colors.info('🗄️'),
   config: colors.muted('⚙️'),
+  database: colors.info('🗄️'),
+  edge: colors.secondary('⚡'),
+  error: colors.error(figures.cross),
+  info: colors.info(figures.info),
+  line: colors.muted(figures.line),
+  stack: colors.primary('📚'),
+  success: colors.success(figures.tick),
+  warning: colors.warning(figures.warning),
 } as const
 
 // Text styling utilities
 export const style = {
-  title: (text: string) => gradients.at3(text),
-  subtitle: (text: string) => colors.secondary(text),
-  heading: (text: string) => colors.primary.bold(text),
-  label: (text: string) => colors.muted(text),
-  value: (text: string) => colors.primary(text),
-  success: (text: string) => colors.success(text),
-  error: (text: string) => colors.error(text),
-  warning: (text: string) => colors.warning(text),
-  info: (text: string) => colors.info(text),
-  muted: (text: string) => colors.muted(text),
   accent: (text: string) => colors.accent(text),
   ai: (text: string) => colors.ai(text),
   code: (text: string) => chalk.cyan.italic(text),
-  path: (text: string) => chalk.dim.underline(text),
   command: (text: string) => chalk.bgBlack.white.bold(` ${text} `),
+  error: (text: string) => colors.error(text),
+  heading: (text: string) => colors.primary.bold(text),
+  info: (text: string) => colors.info(text),
+  label: (text: string) => colors.muted(text),
+  muted: (text: string) => colors.muted(text),
+  path: (text: string) => chalk.dim.underline(text),
+  subtitle: (text: string) => colors.secondary(text),
+  success: (text: string) => colors.success(text),
+  title: (text: string) => gradients.at3(text),
+  value: (text: string) => colors.primary(text),
+  warning: (text: string) => colors.warning(text),
 } as const
 
 // Box utilities
 export const box = {
+  error: (content: string, title?: string) =>
+    boxen(content, {
+      ...(title && { title }),
+      titleAlignment: 'center',
+      padding: 1,
+      margin: 1,
+      borderStyle: 'round',
+      borderColor: 'red',
+    }),
   info: (content: string, title?: string) =>
     boxen(content, {
       ...(title && { title }),
@@ -94,28 +103,19 @@ export const box = {
       borderStyle: 'round',
       borderColor: 'yellow',
     }),
-  error: (content: string, title?: string) =>
-    boxen(content, {
-      ...(title && { title }),
-      titleAlignment: 'center',
-      padding: 1,
-      margin: 1,
-      borderStyle: 'round',
-      borderColor: 'red',
-    }),
 } as const
 
 // Progress indicators
 export const progress = {
-  step: (current: number, total: number, description: string) =>
-    `${colors.muted(`[${current}/${total}]`)} ${description}`,
-
   percentage: (percent: number) => {
     const filled = Math.floor(percent / 5)
     const empty = 20 - filled
     const bar = '█'.repeat(filled) + '░'.repeat(empty)
     return `${colors.primary(bar)} ${colors.muted(`${percent}%`)}`
   },
+
+  step: (current: number, total: number, description: string) =>
+    `${colors.muted(`[${current}/${total}]`)} ${description}`,
 }
 
 // Header utilities
@@ -132,11 +132,11 @@ export const header = {
 
 // List utilities
 export const list = {
-  item: (text: string, symbol = symbols.bullet) => `${symbol} ${text}`,
   checkItem: (text: string, checked = false) => {
     const icon = checked ? symbols.success : colors.muted(figures.radioOff)
     return `${icon} ${text}`
   },
+  item: (text: string, symbol = symbols.bullet) => `${symbol} ${text}`,
   numbered: (items: string[]) =>
     items.map((item, i) => `${colors.muted(`${i + 1}.`)} ${item}`).join('\n'),
 }
