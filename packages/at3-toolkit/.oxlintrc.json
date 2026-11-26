@@ -1,0 +1,48 @@
+{
+  "$schema": "../../node_modules/oxlint/configuration_schema.json",
+  "env": {
+    "es2022": true,
+    "node": true
+  },
+  "categories": {
+    "correctness": "warn",
+    "nursery": "off",
+    "pedantic": "off",
+    "perf": "warn",
+    "restriction": "off",
+    "style": "warn",
+    "suspicious": "warn"
+  },
+  "rules": {
+    "@typescript-eslint/no-inferrable-types": "off",
+    "init-declarations": "off",
+    "no-console": "off",
+    "no-continue": "off",
+    "no-empty-file": "off",
+    "no-magic-numbers": "off",
+    "no-null": "off",
+    "no-ternary": "off",
+    "no-unused-vars": "off",
+    "prefer-destructuring": "off",
+    "prefer-template": "off",
+    "typescript-eslint/no-inferrable-types": "off",
+    "unicorn/no-array-sort": "off",
+    "unicorn/no-null": "off",
+    "unicorn/prefer-global-this": "off"
+  },
+  "overrides": [
+    {
+      "files": ["src/**/*.ts"],
+      "rules": {
+        "curly": "off",
+        "func-style": "off",
+        "id-length": "off",
+        "max-params": "off",
+        "max-statements": "off",
+        "no-await-in-loop": "off",
+        "sort-imports": "off",
+        "sort-keys": "off"
+      }
+    }
+  ]
+}

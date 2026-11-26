@@ -1,0 +1,71 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "env": {
+    "browser": true,
+    "node": true,
+    "es2022": true
+  },
+  "ignorePatterns": [
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/build/**",
+    "**/.next/**",
+    "**/out/**",
+    "**/coverage/**",
+    "**/.turbo/**",
+    "**/.turbopack/**",
+    "**/.cache/**",
+    "**/.vercel/**",
+    "**/storybook-static/**",
+    "**/test-results/**",
+    "**/playwright-report/**",
+    "**/*.generated.*",
+    "**/*.gen.ts",
+    "**/next-env.d.ts",
+    "**/*.tsbuildinfo"
+  ],
+  "categories": {
+    "correctness": "warn",
+    "suspicious": "warn",
+    "perf": "warn",
+    "style": "warn",
+    "pedantic": "off",
+    "restriction": "off",
+    "nursery": "off"
+  },
+  "settings": {
+    "react": {
+      "version": "19.2.0"
+    },
+    "next": {
+      "rootDir": [
+        ".",
+        "packages/at3-toolkit/templates/ait3e"
+      ]
+    }
+  },
+  "rules": {
+    "no-console": "off"
+  },
+  "overrides": [
+    {
+      "files": [
+        "**/*.{test,spec}.{js,jsx,ts,tsx}",
+        "**/test/**"
+      ],
+      "rules": {
+        "typescript/no-explicit-any": "off",
+        "no-console": "off"
+      }
+    },
+    {
+      "files": [
+        "**/*.config.{js,cjs,mjs,ts,cts,mts}",
+        "scripts/**"
+      ],
+      "rules": {
+        "no-console": "off"
+      }
+    }
+  ]
+}

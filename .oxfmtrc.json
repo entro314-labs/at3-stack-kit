@@ -1,0 +1,51 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "printWidth": 100,
+  "tabWidth": 2,
+  "useTabs": false,
+  "semi": false,
+  "singleQuote": true,
+  "jsxSingleQuote": false,
+  "trailingComma": "es5",
+  "bracketSpacing": true,
+  "arrowParens": "always",
+  "endOfLine": "lf",
+  "proseWrap": "preserve",
+  "ignorePatterns": [
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/build/**",
+    "**/.next/**",
+    "**/out/**",
+    "**/coverage/**",
+    "**/.turbo/**",
+    "**/.turbopack/**",
+    "**/.cache/**",
+    "**/.vercel/**",
+    "**/storybook-static/**",
+    "**/test-results/**",
+    "**/playwright-report/**",
+    "**/*.generated.*",
+    "**/*.gen.ts",
+    "**/next-env.d.ts",
+    "**/*.tsbuildinfo"
+  ],
+  "experimentalTailwindcss": {
+    "functions": [
+      "cn",
+      "clsx",
+      "cva",
+      "twMerge"
+    ]
+  },
+  "overrides": [
+    {
+      "files": [
+        "**/*.md"
+      ],
+      "options": {
+        "printWidth": 80
+      }
+    }
+  ]
+}

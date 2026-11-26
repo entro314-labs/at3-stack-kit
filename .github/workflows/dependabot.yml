@@ -19,7 +19,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '24.19.0'
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -60,12 +60,12 @@ jobs:
           # Extract PR title to determine update type
           PR_TITLE="${{ github.event.pull_request.title }}"
           echo "PR Title: $PR_TITLE"
-          
+
           # Check if this is a patch version update
           if echo "$PR_TITLE" | grep -qE "(patch|fix|security)" || echo "$PR_TITLE" | grep -qE "from [0-9]+\.[0-9]+\.[0-9]+ to [0-9]+\.[0-9]+\.[0-9]+$"; then
             echo "AUTO_MERGEABLE=true" >> $GITHUB_OUTPUT
             echo "UPDATE_TYPE=patch" >> $GITHUB_OUTPUT
-          # Check if this is a minor version update  
+          # Check if this is a minor version update
           elif echo "$PR_TITLE" | grep -qE "from [0-9]+\.[0-9]+ to [0-9]+\.[0-9]+"; then
             echo "AUTO_MERGEABLE=false" >> $GITHUB_OUTPUT
             echo "UPDATE_TYPE=minor" >> $GITHUB_OUTPUT
@@ -93,21 +93,21 @@ jobs:
         run: |
           if [ "${{ steps.analyze.outputs.AUTO_MERGEABLE }}" == "true" ]; then
             gh pr comment ${{ github.event.pull_request.number }} --body "🤖 **Dependabot Analysis**: This appears to be a safe ${{ steps.analyze.outputs.UPDATE_TYPE }} update.
-            
+
             ✅ All tests passed
-            ✅ Build successful  
+            ✅ Build successful
             ✅ Type check passed
             ✅ Linting passed
-            
+
             This PR is marked as safe to merge after manual review."
           else
             gh pr comment ${{ github.event.pull_request.number }} --body "🤖 **Dependabot Analysis**: This is a ${{ steps.analyze.outputs.UPDATE_TYPE }} update that requires manual review.
-            
+
             ✅ All tests passed
             ✅ Build successful
-            ✅ Type check passed  
+            ✅ Type check passed
             ✅ Linting passed
-            
+
             ⚠️ Please review for potential breaking changes before merging."
           fi
         env:
@@ -115,7 +115,7 @@ jobs:
 
       # Optional: Enable auto-merge for patch updates
       # Uncomment the following steps to enable auto-merge for safe updates
-      # 
+      #
       # - name: Enable auto-merge
       #   if: steps.analyze.outputs.AUTO_MERGEABLE == 'true'
       #   run: |
@@ -134,7 +134,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '24.19.0'
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -159,9 +159,9 @@ jobs:
       - name: Security update comment
         run: |
           gh pr comment ${{ github.event.pull_request.number }} --body "🚨 **Security Update Detected**
-          
+
           This PR contains security fixes and should be reviewed and merged promptly.
-          
+
           ✅ Security audit passed
           ⚠️ Please verify the fixes address the intended vulnerabilities"
         env:
