@@ -1,22 +1,28 @@
-import { resolve } from "path";
-import { defineConfig } from "vitest/config";
+import { resolve } from 'path'
+import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
+  resolve: {
+    alias: {
+      '@': resolve(__dirname, './src'),
+      '@test': resolve(__dirname, './src/test'),
+    },
+  },
   test: {
     globals: true,
-    environment: "node",
-    setupFiles: ["./src/test/setup.ts"],
-    include: ["src/**/*.{test,spec}.{js,ts}"],
-    exclude: ["node_modules/**", "dist/**", "src/**/*.integration.{test,spec}.{js,ts}"],
+    environment: 'node',
+    setupFiles: ['./src/test/setup.ts'],
+    include: ['src/**/*.{test,spec}.{js,ts}'],
+    exclude: ['node_modules/**', 'dist/**', 'src/**/*.integration.{test,spec}.{js,ts}'],
     coverage: {
-      provider: "v8",
-      reporter: ["text", "json", "html", "lcov"],
-      include: ["src/**/*.ts"],
+      provider: 'v8',
+      reporter: ['text', 'json', 'html', 'lcov'],
+      include: ['src/**/*.ts'],
       exclude: [
-        "src/**/*.{test,spec,d}.ts",
-        "src/test/**",
-        "src/cli.ts", // CLI tested separately with integration tests
-        "dist/**",
+        'src/**/*.{test,spec,d}.ts',
+        'src/test/**',
+        'src/cli.ts', // CLI tested separately with integration tests
+        'dist/**',
       ],
       thresholds: {
         global: {
@@ -29,10 +35,4 @@ export default defineConfig({
     },
     testTimeout: 10000,
   },
-  resolve: {
-    alias: {
-      "@": resolve(__dirname, "./src"),
-      "@test": resolve(__dirname, "./src/test"),
-    },
-  },
-});
+})

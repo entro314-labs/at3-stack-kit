@@ -1,6 +1,6 @@
-import type { NextConfig } from "next";
+import type { NextConfig } from 'next'
 
-const isDev = process.env.NODE_ENV === "development";
+const isDev = process.env.NODE_ENV === 'development'
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
@@ -15,13 +15,13 @@ const nextConfig: NextConfig = {
   experimental: {
     // Performance optimizations
     optimizePackageImports: [
-      "lucide-react",
-      "@radix-ui/react-dialog",
-      "framer-motion",
-      "ai",
-      "@ai-sdk/openai",
-      "@ai-sdk/anthropic",
-      "@ai-sdk/google",
+      'lucide-react',
+      '@radix-ui/react-dialog',
+      'framer-motion',
+      'ai',
+      '@ai-sdk/openai',
+      '@ai-sdk/anthropic',
+      '@ai-sdk/google',
     ],
 
     // Enhanced caching for AI responses
@@ -31,7 +31,7 @@ const nextConfig: NextConfig = {
     },
 
     // Edge runtime optimizations for AI
-    serverComponentsExternalPackages: ["ai", "@ai-sdk/openai"],
+    serverComponentsExternalPackages: ['ai', '@ai-sdk/openai'],
 
     // Development enhancements
     ...(isDev && {
@@ -41,48 +41,48 @@ const nextConfig: NextConfig = {
 
   // Image optimization
   images: {
+    formats: ['image/webp', 'image/avif'],
     remotePatterns: [
       {
-        protocol: "https",
-        hostname: "*.supabase.co",
+        protocol: 'https',
+        hostname: '*.supabase.co',
       },
       // Add other AI-generated image sources as needed
       {
-        protocol: "https",
-        hostname: "oaidalleapiprodscus.blob.core.windows.net",
+        protocol: 'https',
+        hostname: 'oaidalleapiprodscus.blob.core.windows.net',
       },
     ],
-    formats: ["image/webp", "image/avif"],
   },
 
   // Bundle analyzer
-  ...(process.env.ANALYZE === "true" && {
-    bundlePagesExternalPackages: ["sharp"],
+  ...(process.env.ANALYZE === 'true' && {
+    bundlePagesExternalPackages: ['sharp'],
   }),
 
   // Headers for AI streaming and CORS
   async headers() {
     return [
       {
-        source: "/api/:path*",
         headers: [
-          { key: "Access-Control-Allow-Origin", value: "*" },
-          { key: "Access-Control-Allow-Methods", value: "GET, POST, PUT, DELETE, OPTIONS" },
-          { key: "Access-Control-Allow-Headers", value: "Content-Type, Authorization" },
+          { key: 'Access-Control-Allow-Origin', value: '*' },
+          { key: 'Access-Control-Allow-Methods', value: 'GET, POST, PUT, DELETE, OPTIONS' },
+          { key: 'Access-Control-Allow-Headers', value: 'Content-Type, Authorization' },
         ],
+        source: '/api/:path*',
       },
-    ];
+    ]
   },
 
   // Rewrites for AI API routes
   async rewrites() {
     return [
       {
-        source: "/ai/:path*",
-        destination: "/api/ai/:path*",
+        destination: '/api/ai/:path*',
+        source: '/ai/:path*',
       },
-    ];
+    ]
   },
-};
+}
 
-export default nextConfig;
+export default nextConfig

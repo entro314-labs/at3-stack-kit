@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 /* AIT3E Stack Global Styles */
 
@@ -47,9 +47,9 @@
   }
 
   /* Typography - AIT3E optimized */
-  --font-family-sans: "Inter", system-ui, sans-serif;
-  --font-family-mono: "JetBrains Mono", "Fira Code", monospace;
-  --font-family-heading: "Inter", system-ui, sans-serif;
+  --font-family-sans: 'Inter', system-ui, sans-serif;
+  --font-family-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --font-family-heading: 'Inter', system-ui, sans-serif;
 
   /* Spacing scale */
   --spacing-0: 0;
@@ -122,8 +122,8 @@
   body {
     @apply bg-background text-foreground antialiased;
     font-feature-settings:
-      "rlig" 1,
-      "calt" 1;
+      'rlig' 1,
+      'calt' 1;
   }
 
   /* Focus styles for accessibility */
