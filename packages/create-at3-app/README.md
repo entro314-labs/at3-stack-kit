@@ -4,198 +4,90 @@
 
 ![AT3 Logo](../../docs/media/at3-logo-text1.png)
 
-**Scaffold new AT3 Stack projects with AI, edge, and modern tooling**
+**Scaffold AT3 projects with template + stack options**
 
-[![npm version](https://badge.fury.io/js/@entro314-labs%2Fcreate-at3-app.svg)](https://badge.fury.io/js/@entro314-labs%2Fcreate-at3-app)
+[![npm version](https://badge.fury.io/js/@entro314labs%2Fcreate-at3-app.svg)](https://badge.fury.io/js/@entro314labs%2Fcreate-at3-app)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Node.js Version](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen.svg)](https://nodejs.org/)
+[![Node.js Version](https://img.shields.io/badge/node-%3E%3D24.19.0-brightgreen.svg)](https://nodejs.org/)
 
 </div>
 
-**create-at3-app** is the fastest way to get started with the AT3 Stack. Scaffold production-ready applications with AI integration, edge deployment, and modern development tools in seconds.
-
-## About AT3 Stack
-
-**AT3** (AIT3E) combines the proven T3 foundation with first-class AI integration and edge-first architecture:
-
-- **🤖 AI** - First-class artificial intelligence integration with multiple providers
-- **📚 T3** - The beloved Next.js + TypeScript + Tailwind foundation  
-- **⚡ E** - Edge computing and serverless deployment
+`@entro314labs/create-at3-app` scaffolds AT3 projects with template defaults plus explicit database/auth/lint/AI choices.
 
 ## Quick Start
 
 ```bash
-# Create a new AT3 app
-npx create-at3-app@latest my-app
+# interactive
+npx @entro314labs/create-at3-app@latest
 
-# Or with pnpm (recommended)
-pnpm create @entro314-labs/at3-app my-app
+# with project name; defaults to 83-flavor
+npx @entro314labs/create-at3-app@latest my-app
 
-# Or with yarn
-yarn create @entro314-labs/at3-app my-app
+# pnpm
+pnpm dlx @entro314labs/create-at3-app my-app
+
+# yarn
+yarn dlx @entro314labs/create-at3-app my-app
 ```
 
 ## Templates
 
-Choose from carefully crafted templates to match your project needs:
+- `t3`
+- `t3-edge`
+- `t3-ai-custom`
+- `t3-ai-vercel`
+- `t3-ai-both`
+- `suggested`
+- `83-flavor` (default profile)
 
-### **T3 Base**
-Classic T3 stack foundation - perfect for traditional web apps
-- ✅ Next.js 15 with App Router
-- ✅ TypeScript with strict configuration
-- ✅ Tailwind CSS 4.x
-- ✅ tRPC for type-safe APIs
-
-### **T3 + Edge** 
-T3 stack enhanced with edge-first deployment
-- ✅ Everything in T3 Base
-- ✅ Supabase for database and auth
-- ✅ Edge Runtime optimization
-- ✅ Serverless deployment ready
-
-### **T3 + AI (Custom)**
-T3 + flexible AI integration with multiple providers
-- ✅ Everything in T3 Base
-- ✅ OpenAI, Anthropic, Google AI support
-- ✅ Custom AI provider configuration
-- ✅ Streaming AI responses
-
-### **T3 + AI (Vercel SDK)**
-T3 + Vercel AI SDK for streamlined AI features
-- ✅ Everything in T3 Base
-- ✅ Vercel AI SDK integration
-- ✅ Built-in streaming support
-- ✅ UI components for AI
-
-### **T3 + AI (Both)**
-T3 + comprehensive AI integration
-- ✅ Everything in T3 Base
-- ✅ Custom AI providers + Vercel SDK
-- ✅ Maximum AI flexibility
-- ✅ Production-ready streaming
-
-### **AT3 Suggested** 🌟
-Complete AT3 stack with all features
-- ✅ Everything above
-- ✅ PWA support
-- ✅ Internationalization (i18n)
-- ✅ Comprehensive testing setup
-- ✅ Production optimizations
-
-### **83 Flavor** ⭐
-Signature entro314-labs stack configuration
-- ✅ T3 foundation
-- ✅ Supabase + Vercel Edge
-- ✅ Vercel AI SDK
-- ✅ Optimized for rapid deployment
-
-## Interactive Mode
-
-Run without arguments for the full interactive experience:
+## Non-interactive mode
 
 ```bash
-npx create-at3-app@latest
-```
-
-The CLI will guide you through:
-- 📝 Project name validation
-- 🎯 Template selection with descriptions
-- 📦 Package manager detection
-- ⚙️ Feature configuration
-- 🚀 Automatic setup
-
-## Non-Interactive Mode
-
-For automation and scripts:
-
-```bash
-# Create with specific options
-npx create-at3-app@latest my-app \
+npx @entro314labs/create-at3-app@latest my-app \
   --template 83-flavor \
   --pm pnpm \
-  --no-git \
-  --no-supabase
+  --database neon \
+  --auth clerk \
+  --lint oxc \
+  --ai \
+  --ai-mode vercel
 ```
 
 ### Options
 
-- `--template, -t <template>` - Template to use (default: t3)
-- `--pm <manager>` - Package manager: pnpm, npm, yarn (default: pnpm)
-- `--no-install` - Skip dependency installation
-- `--no-git` - Skip Git repository initialization
-- `--no-supabase` - Skip Supabase project setup
+- `--template, -t <template>`
+- `--pm <manager>` (`pnpm`, `npm`, `yarn`)
+- `--database <database>` (`supabase`, `neon`, `drizzle`, `none`)
+- `--auth <auth>` (`supabase`, `clerk`, `none`)
+- `--lint <tool>` (`biome`, `oxc`)
+- `--ai`
+- `--ai-mode <mode>` (`vercel`, `custom`, `both`)
+- `--without-ai`
+- `--no-install`
+- `--no-git`
 
-## What's Created
+## Feature behavior
 
-Your new AT3 app includes:
+- `t3-ai-vercel` and `--ai-mode vercel` scaffold an OpenAI chat route with `OPENAI_API_KEY`.
+- `t3-ai-custom`, `t3-ai-both`, `--ai-mode custom`, and `--ai-mode both` scaffold OpenAI, Anthropic, and Google provider selection with matching env placeholders.
+- AI-disabled scaffolds remove AI chat route and AI dependencies from `package.json`.
+- Supabase auth selection automatically enforces Supabase database.
+- Supabase auth scaffolds verify the server session through Supabase instead of checking cookie names directly.
 
-```
-my-app/
-├── src/
-│   ├── app/              # Next.js 15 App Router
-│   ├── components/       # Reusable UI components
-│   ├── lib/             # Utilities and configurations
-│   ├── server/          # Server-side code (tRPC, auth)
-│   └── styles/          # Global styles and Tailwind
-├── public/              # Static assets
-├── .env.example         # Environment variables template
-├── next.config.js       # Next.js configuration
-├── tailwind.config.js   # Tailwind CSS configuration
-├── tsconfig.json        # TypeScript configuration
-└── package.json         # Dependencies and scripts
-```
+## Requirements
 
-## Next Steps
+- Node.js `>=24.x`
+- npm / pnpm / yarn
 
-After creating your app:
+## Related packages
 
-1. **📁 Navigate to your project**
-   ```bash
-   cd my-app
-   ```
-
-2. **⚙️ Configure environment variables**
-   ```bash
-   cp .env.example .env.local
-   # Add your API keys and database URLs
-   ```
-
-3. **🚀 Start developing**
-   ```bash
-   pnpm dev
-   ```
-
-4. **📖 Explore the documentation**
-   - [AT3 Stack Guide](https://at3-stack.dev/docs)
-   - [AI Integration](https://at3-stack.dev/docs/ai)
-   - [Edge Deployment](https://at3-stack.dev/docs/edge)
-
-## AT3 Ecosystem
-
-**create-at3-app** works seamlessly with other AT3 tools:
-
-- **[at3-stack-kit](../at3-stack-kit)** - Upgrade existing projects to AT3 Stack
-- **[@entro314-labs/at3-toolkit](../at3-toolkit)** - Advanced development tools and migration
-
-## Examples
-
-Check out example AT3 applications:
-
-- [Basic AT3 App](../../examples/basic-at3)
-- [AI Chat App](../../examples/ai-chat)
-- [E-commerce Platform](../../examples/ecommerce)
-- [SaaS Starter](../../examples/saas)
-
-## Contributing
-
-We welcome contributions! Please see our [Contributing Guide](../../CONTRIBUTING.md).
+- [`@entro314labs/at3-stack-kit`](../at3-stack-kit)
+- [`@entro314labs/at3-toolkit`](../at3-toolkit)
 
 ## Support
 
 - 📖 [Documentation](https://at3-stack.dev)
 - 🐛 [Issues](https://github.com/entro314-labs/at3-stack-kit/issues)
-- 💬 [Discord](https://discord.gg/at3-stack)
-- 🐦 [Twitter](https://twitter.com/at3stack)
 
 ## License
 

@@ -2,13 +2,13 @@
 
 <div align="center">
 
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.9.2-blue.svg)](https://www.typescriptlang.org/)
-[![Next.js](https://img.shields.io/badge/Next.js-15.4.6-black.svg)](https://nextjs.org/)
-[![React](https://img.shields.io/badge/React-19.1.1-blue.svg)](https://reactjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9.3-blue.svg)](https://www.typescriptlang.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-16.1.6-black.svg)](https://nextjs.org/)
+[![React](https://img.shields.io/badge/React-19.2.4-blue.svg)](https://reactjs.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-4.1.11-38B2AC.svg)](https://tailwindcss.com/)
 [![Supabase](https://img.shields.io/badge/Supabase-Latest-green.svg)](https://supabase.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Node.js Version](https://img.shields.io/badge/node-%3E%3D22.0.0-brightgreen.svg)](https://nodejs.org/)
+[![Node.js Version](https://img.shields.io/badge/node-%3E%3D24.19.0-brightgreen.svg)](https://nodejs.org/)
 
 </div>
 
@@ -107,7 +107,7 @@ npx supabase db push
 pnpm dev
 
 # Run with Turbopack (faster)
-pnpm dev:turbo
+pnpm dev:turbopack
 ```
 
 That's it! Your AT3 application is ready at [http://localhost:3000](http://localhost:3000).
@@ -132,7 +132,7 @@ That's it! Your AT3 application is ready at [http://localhost:3000](http://local
 </svg>
 
 **Frontend**  
-Next.js 15, React 19  
+Next.js 16, React 19  
 TypeScript, Tailwind CSS 4
 
 </td>
@@ -158,7 +158,7 @@ Edge Functions, Row Level Security
 
 **AI & Tools**  
 OpenAI, Anthropic, Google AI  
-Biome, Vitest, Playwright
+OXC (oxlint + oxfmt), Vitest, Playwright
 
 </td>
 <td align="center">
@@ -186,11 +186,11 @@ Docker, PWA Support
 ```bash
 # Development
 pnpm dev                         # Start development server
-pnpm dev:turbo                   # Start with Turbopack (faster)
+pnpm dev:turbopack               # Start with Turbopack (faster)
 pnpm build                       # Build for production
 
 # Code Quality
-pnpm lint                        # Run Biome linter
+pnpm lint                        # Run OXC lint checks
 pnpm lint:fix                    # Fix linting issues
 pnpm format                      # Format code
 pnpm type-check                  # TypeScript checking
@@ -198,12 +198,12 @@ pnpm type-check                  # TypeScript checking
 # Testing
 pnpm test                        # Run unit tests
 pnpm test:e2e                    # Run E2E tests
-pnpm test:coverage               # Run tests with coverage
+pnpm test:ci                     # Run tests with coverage + package test:ci
 
 # Database
-pnpm db:generate                 # Generate types from Supabase
-pnpm db:push                     # Push migrations
-pnpm db:reset                    # Reset database
+pnpm generate:types              # Generate Supabase types helper script
+pnpm db:setup                    # Initialize local Supabase setup script
+pnpm db:validate                 # Run Supabase lint + status
 
 # Utilities
 pnpm analyze                     # Analyze bundle size
@@ -350,8 +350,8 @@ We use [Conventional Commits](https://www.conventionalcommits.org/):
 <path d="M20 18c1.1 0 1.99-.9 1.99-2L22 5c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v11c0 1.1.9 2 2 2H0c0 1.1.9 2 2 2h20c1.1 0 2-.9 2-2h-4z" fill="#6B7280"/>
 </svg>
 
-- **Node.js**: >= 22.0.0
-- **pnpm**: >= 10.0.0 (recommended over npm/yarn)
+- **Node.js**: >= 24.19.0
+- **pnpm**: >= 11.20.0 (recommended over npm/yarn)
 - **Git**: Latest version
 - **Operating System**: Windows, macOS, Linux
 

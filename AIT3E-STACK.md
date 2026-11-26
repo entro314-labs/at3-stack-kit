@@ -17,9 +17,9 @@
 - **E** - Edge computing and serverless deployment
 - **83** - The second half of 1983, representing personal connection to this evolution
 
-The "83" isn't just a number—it's the second half of my birth year (1983), making this stack deeply personal. Just as 1983 represented a pivotal year in computing history, AIT3E represents the pivotal evolution from traditional web development to AI-native applications.
+The "83" isn't just a number - it's the second half of my birth year (1983), making this stack deeply personal. Just as 1983 represented a pivotal year in computing history, AIT3E represents the pivotal evolution from traditional web development to AI-native applications.
 
-**AT3** for short, or simply **83** as shorthand, this isn't just another tech stack—it's a philosophy of building for the AI era while staying grounded in proven patterns.
+**AT3** for short, or simply **83** as shorthand, this isn't just another tech stack - it's a philosophy of building for the AI era while staying grounded in proven patterns.
 
 ## The Stack Architecture
 

@@ -93,8 +93,8 @@ test(auth): add sign-in form validation tests
 
 ### Prerequisites
 
-- Node.js 22+ (use `fnm` for version management)
-- pnpm 10+ (faster than npm/yarn)
+- Node.js 24.19.0+ (use `fnm` for version management)
+- pnpm 11.20.0+ (faster than npm/yarn)
 - Git
 - Modern code editor (VS Code recommended)
 
@@ -137,7 +137,7 @@ test(auth): add sign-in form validation tests
 
 2. **Configure settings**:
    - Settings are pre-configured in `.vscode/settings.json`
-   - Includes Biome integration, Tailwind IntelliSense, etc.
+   - Includes OXC/formatting integration, Tailwind IntelliSense, etc.
 
 ## 📋 Code Standards
 
@@ -216,12 +216,12 @@ describe('SignInForm', () => {
 ```bash
 # Development
 pnpm dev              # Start dev server
-pnpm dev:turbo        # Start with Turbopack
+pnpm dev:turbopack    # Start with Turbopack
 pnpm build            # Production build
 pnpm start            # Start production server
 
 # Code Quality
-pnpm lint             # Run Biome linter
+pnpm lint             # Run OXC lint checks
 pnpm lint:fix         # Fix linting issues
 pnpm format           # Format code
 pnpm type-check       # TypeScript checking
@@ -229,30 +229,30 @@ pnpm type-check       # TypeScript checking
 # Testing
 pnpm test             # Unit tests
 pnpm test:watch       # Watch mode
-pnpm test:coverage    # With coverage
+pnpm test:ci          # With coverage
 pnpm test:e2e         # E2E tests
 pnpm test:browser     # Browser tests
 
 # Database
-pnpm db:generate      # Generate types
-pnpm db:push          # Push migrations
-pnpm db:reset         # Reset database
+pnpm generate:types   # Generate types
+pnpm db:status        # Check local Supabase status
+pnpm db:validate      # Validate local Supabase setup
 ```
 
 ### Git Hooks
 
-The project uses Husky for git hooks:
+The project uses Lefthook for git hooks:
 
-- **pre-commit**: Runs lint-staged to check staged files
+- **pre-commit**: Runs lint/type checks
 - **commit-msg**: Validates commit message format
 - **pre-push**: Runs tests and type checking
 
-### Biome Configuration
+### OXC Configuration
 
-We use Biome instead of ESLint + Prettier for:
-- **Faster linting** (5-20x faster than ESLint)
-- **Unified tooling** (linting + formatting)
-- **Better TypeScript support**
+We use OXC tooling (`oxlint` + `oxfmt`) for:
+- **Fast linting**
+- **Separate linting and formatting commands**
+- **TypeScript-aware checks**
 - **Consistent code style**
 
 ## 🧪 Testing Guidelines
